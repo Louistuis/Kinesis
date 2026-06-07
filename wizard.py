@@ -16,10 +16,21 @@ It looks like this is your first time launching Kinesis. Let's get everything se
     
     # 1. API Key Setup
     console.print("\n[bold magenta]Step 1: Google Gemini API Key[/bold magenta]")
-    console.print("Kinesis requires a Gemini API Key to function. You can get one for free at [cyan]https://aistudio.google.com/app/apikey[/cyan]")
     
-    api_key = Prompt.ask("Enter your [bold yellow]GEMINI_API_KEY[/bold yellow]")
-    if not api_key.strip():
+    existing_key = os.environ.get("GEMINI_API_KEY")
+    api_key = ""
+    
+    if existing_key:
+        masked_key = f"{existing_key[:4]}...{existing_key[-4:]}" if len(existing_key) > 8 else "***"
+        console.print(f"[green]Auto-detected an existing GEMINI_API_KEY in your environment: {masked_key}[/green]")
+        if Confirm.ask("Would you like to use this existing key?"):
+            api_key = existing_key
+            
+    if not api_key:
+        console.print("Kinesis requires a Gemini API Key to function. You can get one for free at [cyan]https://aistudio.google.com/app/apikey[/cyan]")
+        api_key = Prompt.ask("Enter your [bold yellow]GEMINI_API_KEY[/bold yellow]")
+        
+    if not api_key or not api_key.strip():
         console.print("[red]API Key cannot be empty. Setup aborted.[/red]")
         sys.exit(1)
         
