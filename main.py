@@ -120,6 +120,7 @@ def main():
         "/quit": "Exit Kinesis CLI",
         "/clear": "Clear the terminal screen",
         "/status": "Show agent status and system info",
+        "/update": "Pull latest code and instantly hot-reload Kinesis",
     }
     completer = WordCompleter(list(slash_commands.keys()), ignore_case=True)
 
@@ -149,6 +150,19 @@ def main():
                 status_text = f"**System Information:**\n- Primary Display Resolution: {width}x{height}\n- Fail-Safe: Active\n- API Model: gemini-2.5-computer-use-preview-10-2025"
                 console.print(Panel(Markdown(status_text), border_style="magenta"))
                 continue
+            if cmd == '/update':
+                console.print("\n[dim]Pulling latest changes from GitHub...[/dim]")
+                import subprocess
+                subprocess.run(["git", "pull", "origin", "master"])
+                console.print("[bold green]Update complete. Hot-reloading Kinesis...[/bold green]")
+                # Kill background phantom cursor process
+                try:
+                    cursor_process.terminate()
+                except:
+                    pass
+                # Physically replace current python process with a new one
+                import os
+                os.execv(sys.executable, [sys.executable, __file__])
                 
             if not task.strip():
                 continue
