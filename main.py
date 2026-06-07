@@ -155,7 +155,6 @@ def main():
                 console.print("\n[dim]Restarting Kinesis for Setup Wizard...[/dim]")
                 try: cursor_process.terminate()
                 except: pass
-                import sys
                 os.execv(sys.executable, [sys.executable, __file__])
             if cmd == '/clear':
                 import os
