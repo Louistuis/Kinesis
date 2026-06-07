@@ -32,7 +32,7 @@ def show_overlays(screen_data_list):
         label.setEditable_(False)
         
         window.contentView().addSubview_(label)
-        window.makeKeyAndOrderFront_(None)
+        window.orderFrontRegardless()
         
         windows.append(window)
         
