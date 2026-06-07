@@ -69,7 +69,7 @@ def get_tools():
                 "properties": {
                     "clicks": {
                         "type": "INTEGER",
-                        "description": "Amount to scroll. Positive=up, Negative=down."
+                        "description": "Amount to scroll. Try positive values first. If the screen scrolls the wrong way, immediately try negative values."
                     },
                     "x": {
                         "type": "INTEGER",
@@ -104,10 +104,14 @@ def get_tools():
                 "properties": {
                     "status": {
                         "type": "STRING",
-                        "description": "Final status message or result."
+                        "description": "Brief final status message."
+                    },
+                    "report": {
+                        "type": "STRING",
+                        "description": "A comprehensive, detailed top-to-bottom summary of everything you did, the information you found, and the final results."
                     }
                 },
-                "required": ["status"]
+                "required": ["status", "report"]
             }
         },
         {

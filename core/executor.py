@@ -82,8 +82,10 @@ class ActionExecutor:
                 
             elif name == "task_complete":
                 status = args.get("status", "Completed")
+                report = args.get("report", "")
                 result_dict["status"] = status
-                yield {"type": "complete", "status": status, "thought": event["thought"]}
+                result_dict["report"] = report
+                yield {"type": "complete", "status": status, "report": report, "thought": event["thought"]}
                 task_finished = True
                 action_executed = True
                 

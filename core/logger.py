@@ -15,6 +15,7 @@ class Logger:
         self.id = uuid.uuid4().hex[:6]
         self.timestamp = datetime.now().isoformat()
         self.title = "Untitled Mission"
+        self.report = None
         
         if not os.path.exists(LOGS_DIR):
             os.makedirs(LOGS_DIR)
@@ -51,6 +52,7 @@ class Logger:
             "title": self.title,
             "timestamp": self.timestamp,
             "directive": self.directive,
+            "report": self.report,
             "thoughts": self.thoughts,
             "actions": self.actions
         }

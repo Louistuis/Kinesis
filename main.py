@@ -127,7 +127,7 @@ def main():
         "/log off": "Disable mission logging",
         "/log list": "List all saved mission logs",
         "/log <id>": "View a specific mission log by ID",
-        "/theme <id>": "Change UI theme (1: Cyberpunk, 2: Apple, 3: Hacker)",
+        "/result <id>": "View the comprehensive final report of a mission",
         "/delete <id>": "Delete a mission log by ID or 'last'",
         "/resume <id>": "Resume a mission log by ID or 'last'",
     }
@@ -135,7 +135,6 @@ def main():
 
     global_tasks = []
     logging_enabled = False
-    current_theme = 1
 
     while True:
         try:
@@ -214,15 +213,56 @@ def main():
                 else:
                     console.print("[dim]Usage: /log on | /log off | /log list | /log [ID][/dim]")
                 continue
-            if task.lower().startswith('/theme '):
-                theme_str = task.lower().split()[1]
-                if theme_str in ['1', '2', '3']:
-                    current_theme = int(theme_str)
-                    from ui.dashboard import THEMES
-                    t = THEMES[current_theme]
-                    console.print(f"[{t['success']}]Theme {current_theme} activated.[/{t['success']}]")
-                else:
-                    console.print("[dim]Invalid theme. Use 1, 2, or 3.[/dim]")
+            if task.lower().startswith('/result'):
+                args = task.lower().split()
+                if len(args) == 1 or args[1] == 'list':
+                    # Handled identical to /log list
+                    import os, json
+                    from rich.table import Table
+                    logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
+                    if not os.path.exists(logs_dir) or not os.listdir(logs_dir):
+                        console.print("[dim]No results found.[/dim]")
+                        continue
+                    table = Table(title="Mission Results", show_header=True, header_style="bold magenta")
+                    table.add_column("ID", style="cyan")
+                    table.add_column("Title", style="green")
+                    table.add_column("Timestamp", style="dim")
+                    logs = []
+                    for f in os.listdir(logs_dir):
+                        if f.endswith('.json'):
+                            with open(os.path.join(logs_dir, f), 'r') as log_file:
+                                try: logs.append(json.load(log_file))
+                                except: pass
+                    logs.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+                    for log in logs:
+                        table.add_row(log.get('id', ''), log.get('title', ''), log.get('timestamp', '')[:16].replace('T', ' '))
+                    console.print(table)
+                elif len(args) == 2:
+                    arg = args[1]
+                    import os, json
+                    logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
+                    target_file = None
+                    if arg == 'last':
+                        files = [f for f in os.listdir(logs_dir) if f.endswith('.json')]
+                        if files:
+                            files.sort(key=lambda x: os.path.getmtime(os.path.join(logs_dir, x)), reverse=True)
+                            target_file = os.path.join(logs_dir, files[0])
+                    else:
+                        pot_file = os.path.join(logs_dir, f"{arg}.json")
+                        if os.path.exists(pot_file): target_file = pot_file
+                        
+                    if target_file and os.path.exists(target_file):
+                        with open(target_file, 'r') as f: data = json.load(f)
+                        console.print(f"\n[bold cyan]🧠 Mission Result: {data.get('title', 'Unknown')} ({data.get('id')})[/bold cyan]")
+                        console.print(f"[dim italic]Directive: {data.get('directive', '')}[/dim italic]\n")
+                        report = data.get('report')
+                        if report:
+                            console.print(Panel(Markdown(report), title="[bold green]Final Report[/bold green]", border_style="green", padding=(1, 2)))
+                        else:
+                            console.print("[dim]No comprehensive report was generated for this mission.[/dim]")
+                        console.print("\n")
+                    else:
+                        console.print(f"[bold red]Result {arg} not found.[/bold red]")
                 continue
             if task.lower().startswith('/delete '):
                 arg = task.lower().split()[1]
@@ -318,7 +358,7 @@ def main():
                 continue
                 
             
-            dashboard = LiveDashboard(task, theme_id=current_theme)
+            dashboard = LiveDashboard(task)
             dashboard.tasks = global_tasks
             step_counter = 1
             
@@ -410,9 +450,12 @@ def main():
                             if thought:
                                 dashboard.update_thought(thought)
                             dashboard.update_status(f"✅ TASK COMPLETE: {event.get('status')}")
+                            if logger: logger.report = event.get('report')
                             live.update(dashboard.build_layout())
                             time.sleep(1) # Let the user see completion before closing Live
                             console.print(Panel(f"✅ [bold green]TASK COMPLETE:[/bold green] {event.get('status')}", border_style="green", padding=(1, 2)))
+                            if event.get('report'):
+                                console.print("\n[bold cyan]Full Report Available! Type `/result last` to view it.[/bold cyan]")
                             
                         elif event["type"] == "error":
                             dashboard.update_status(f"❌ ERROR: {event['message']}")
@@ -426,7 +469,7 @@ def main():
             finally:
                 if logger:
                     log_id, title = logger.save()
-                    console.print(f"[dim]Mission log saved as {log_id}: {title}[/dim]")
+                    console.print(f"[bold green]Mission logged successfully as ID: {log_id}[/bold green] [dim]({title})[/dim]")
                 
         except pyautogui.FailSafeException:
             console.print("\n[bold red][FAIL-SAFE TRIGGERED] Mouse moved to screen corner. Execution aggressively aborted.[/bold red]")

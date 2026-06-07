@@ -5,16 +5,11 @@ from rich.text import Text
 from rich.spinner import Spinner
 from rich.markdown import Markdown
 
-THEMES = {
-    1: {"primary": "magenta", "secondary": "cyan", "border": "blue", "success": "green", "warning": "yellow", "danger": "red", "dim": "dim", "text": "white", "header_bg": "deep_sky_blue1"},
-    2: {"primary": "bright_blue", "secondary": "bright_white", "border": "white", "success": "bright_green", "warning": "bright_yellow", "danger": "bright_red", "dim": "dim white", "text": "white", "header_bg": "bright_black"},
-    3: {"primary": "green", "secondary": "green", "border": "green", "success": "bright_green", "warning": "green", "danger": "bright_green", "dim": "dim green", "text": "bright_green", "header_bg": "black"}
-}
-
 class LiveDashboard:
-    def __init__(self, task_directive: str, theme_id: int = 1):
+    def __init__(self, task_directive: str):
         self.task_directive = task_directive
-        self.theme = THEMES.get(theme_id, THEMES[1])
+        # Unified global theme (Cyberpunk)
+        self.theme = {"primary": "magenta", "secondary": "cyan", "border": "blue", "success": "green", "warning": "yellow", "danger": "red", "dim": "dim", "text": "white", "header_bg": "deep_sky_blue1"}
         self.actions = []
         self.current_thought = "Awaiting thought..."
         self.status_message = "Initializing..."
