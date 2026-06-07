@@ -2,6 +2,7 @@ import pyautogui
 from PIL import ImageGrab, Image
 import time
 import subprocess
+import Quartz
 from config import calculate_scaling_factor, TARGET_MAX_WIDTH
 
 # Global Fail-Safe: Moving mouse to any corner will abort execution
