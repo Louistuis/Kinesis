@@ -201,12 +201,16 @@ class MacBridge:
         warp_event = Quartz.CGEventCreateMouseEvent(None, Quartz.kCGEventMouseMoved, ai_pos, 0)
         Quartz.CGEventPost(Quartz.kCGHIDEventTap, warp_event)
         time.sleep(0.02) # Allow macOS to register new focus
-            
-        sleep_interval = 0.015
-        direction = 1 if clicks > 0 else -1
+        # Cap the scroll animation steps to avoid infinite loops when model passes huge pixel values
+        MAX_ANIMATION_STEPS = 25
+        scroll_per_step = max(1, steps // MAX_ANIMATION_STEPS) if steps > MAX_ANIMATION_STEPS else 1
+        actual_steps = min(steps, MAX_ANIMATION_STEPS)
         
-        for _ in range(steps):
-            pyautogui.scroll(direction)
+        direction_sign = 1 if clicks > 0 else -1
+        sleep_interval = 0.015
+        
+        for _ in range(actual_steps):
+            pyautogui.scroll(direction_sign * scroll_per_step)
             time.sleep(sleep_interval)
             
         # Instantly restore hardware mouse position
