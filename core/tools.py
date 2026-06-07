@@ -63,16 +63,24 @@ def get_tools():
         },
         {
             "name": "scroll_action",
-            "description": "Scroll the screen.",
+            "description": "Scroll the screen. You MUST provide the x and y coordinates of the area you want to scroll.",
             "parameters": {
                 "type": "OBJECT",
                 "properties": {
                     "clicks": {
                         "type": "INTEGER",
                         "description": "Amount to scroll. Positive=up, Negative=down."
+                    },
+                    "x": {
+                        "type": "INTEGER",
+                        "description": "X coordinate scaled from 0 to 1000 of the target area."
+                    },
+                    "y": {
+                        "type": "INTEGER",
+                        "description": "Y coordinate scaled from 0 to 1000 of the target area."
                     }
                 },
-                "required": ["clicks"]
+                "required": ["clicks", "x", "y"]
             }
         },
         {

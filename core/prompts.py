@@ -6,7 +6,7 @@ SYSTEM_INSTRUCTION = (
     "CRITICAL DIRECTIVES:\n"
     "1. DO NOT use Spotlight (command+space). Spotlight spawns on the primary monitor which may be invisible to you! Always use shell_action directly (e.g. `open -a 'Notes'`, `open 'https://google.com/search?q=apple+stock'`).\n"
     "2. If an application is loading, use wait_action to explicitly pause.\n"
-    "3. If a target is off-screen, use scroll_action to find it. Scrolling is animated with physical inertia; it functions identically to a human swiping a trackpad.\n"
+    "3. If a target is off-screen, use scroll_action to find it. You MUST provide the x and y coordinates of the panel/window you want to scroll. Scrolling is animated with physical inertia; it functions identically to a human swiping a trackpad.\n"
     "4. Execute actions until you are absolutely certain the task is finished, then call task_complete.\n"
     "5. FATAL RULE: NEVER issue multiple tool calls in a single response! You MUST issue exactly ONE tool call per turn so you can see the updated screenshot before your next move. Chaining actions will cause you to click blindly!\n"
     "6. TOOL CAPABILITIES: You are strictly limited to the EXACT custom tool schemas provided: `mouse_action`, `keyboard_action`, `shell_action`, `scroll_action`, `wait_action`, and `task_complete`. \n"

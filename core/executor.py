@@ -63,7 +63,15 @@ class ActionExecutor:
                 action_executed = True
                 
             elif name == "scroll_action":
+                x_model = int(args.get("x", 500))
+                y_model = int(args.get("y", 500))
+                x_native, y_native = model_to_native_coords(x_model, y_model, logical_width, logical_height)
+                event["native_coords"] = (x_native, y_native)
+                
                 yield event
+                
+                # Move to the coordinate first, because macOS scrolls the view under the pointer
+                self.bridge.execute_mouse_action("move", x_native, y_native)
                 self.bridge.execute_scroll_action(int(args.get("clicks", 0)))
                 action_executed = True
                 
