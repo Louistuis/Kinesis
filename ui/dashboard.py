@@ -5,13 +5,20 @@ from rich.text import Text
 from rich.spinner import Spinner
 from rich.markdown import Markdown
 
+THEMES = {
+    1: {"primary": "magenta", "secondary": "cyan", "border": "blue", "success": "green", "warning": "yellow", "danger": "red", "dim": "dim", "text": "white", "header_bg": "deep_sky_blue1"},
+    2: {"primary": "bright_blue", "secondary": "bright_white", "border": "white", "success": "bright_green", "warning": "bright_yellow", "danger": "bright_red", "dim": "dim white", "text": "white", "header_bg": "bright_black"},
+    3: {"primary": "green", "secondary": "green", "border": "green", "success": "bright_green", "warning": "green", "danger": "bright_green", "dim": "dim green", "text": "bright_green", "header_bg": "black"}
+}
+
 class LiveDashboard:
-    def __init__(self, task_directive: str):
+    def __init__(self, task_directive: str, theme_id: int = 1):
         self.task_directive = task_directive
+        self.theme = THEMES.get(theme_id, THEMES[1])
         self.actions = []
         self.current_thought = "Awaiting thought..."
         self.status_message = "Initializing..."
-        self.spinner = Spinner("dots", style="bold green")
+        self.spinner = Spinner("dots", style=f"bold {self.theme['success']}")
         self.tasks = []  # List of dicts: {"desc": "...", "status": "pending"|"completed"}
         
     def add_action(self, step_num: int, icon: str, desc: str, target: str):
@@ -38,6 +45,7 @@ class LiveDashboard:
         self.tasks = []
 
     def build_layout(self) -> Layout:
+        t = self.theme
         layout = Layout()
         
         # Split into header, body, footer
@@ -60,48 +68,48 @@ class LiveDashboard:
         )
         
         # Header
-        header_text = Text(f" KINESIS DIRECTIVE: {self.task_directive} ", style="bold white on deep_sky_blue1", justify="center")
-        layout["header"].update(Panel(header_text, style="deep_sky_blue1", border_style="deep_sky_blue1"))
+        header_text = Text(f" KINESIS DIRECTIVE: {self.task_directive} ", style=f"bold {t['text']} on {t['header_bg']}", justify="center")
+        layout["header"].update(Panel(header_text, style=t['header_bg'], border_style=t['header_bg']))
         
         # Action Log Table
-        table = Table(show_header=True, header_style="bold magenta", expand=True, border_style="magenta", box=None)
+        table = Table(show_header=True, header_style=f"bold {t['primary']}", expand=True, border_style=t['primary'], box=None)
         table.add_column("Step", width=4, justify="center", no_wrap=True)
         table.add_column("Type", width=4, justify="center", no_wrap=True)
-        table.add_column("Action", style="cyan", width=15, no_wrap=True, overflow="ellipsis")
-        table.add_column("Target / Details", style="dim", no_wrap=True, overflow="ellipsis")
+        table.add_column("Action", style=t['secondary'], width=15, no_wrap=True, overflow="ellipsis")
+        table.add_column("Target / Details", style=t['dim'], no_wrap=True, overflow="ellipsis")
         
         for act in self.actions:
             table.add_row(act[0], act[1], act[2], act[3])
             
-        layout["action_log"].update(Panel(table, title="[bold magenta]⚡ Action Stream[/bold magenta]", border_style="magenta", padding=(1, 2)))
+        layout["action_log"].update(Panel(table, title=f"[bold {t['primary']}]⚡ Action Stream[/bold {t['primary']}]", border_style=t['primary'], padding=(1, 2)))
         
         # Brain Panel
         brain_md = Markdown(self.current_thought)
-        layout["brain"].update(Panel(brain_md, title="[bold blue]🧠 Internal Brain[/bold blue]", border_style="blue", padding=(1, 2)))
+        layout["brain"].update(Panel(brain_md, title=f"[bold {t['border']}]🧠 Internal Brain[/bold {t['border']}]", border_style=t['border'], padding=(1, 2)))
         
         # Task Manager Panel
         task_table = Table.grid(padding=(0, 1))
         task_table.add_column(style="bold", width=3)
-        task_table.add_column(style="white", no_wrap=True, overflow="ellipsis")
+        task_table.add_column(style=t['text'], no_wrap=True, overflow="ellipsis")
         
         if not self.tasks:
-            task_table.add_row("", "[dim italic]No active subtasks...[/dim italic]")
+            task_table.add_row("", f"[{t['dim']} italic]No active subtasks...[/{t['dim']} italic]")
         else:
-            for t in self.tasks:
-                if t["status"] == "completed":
-                    task_table.add_row("[green]✓[/green]", f"[dim strike]{t['desc']}[/dim strike]")
+            for task in self.tasks:
+                if task["status"] == "completed":
+                    task_table.add_row(f"[{t['success']}]✓[/{t['success']}]", f"[{t['dim']} strike]{task['desc']}[/{t['dim']} strike]")
                 else:
-                    task_table.add_row("[yellow]○[/yellow]", t["desc"])
+                    task_table.add_row(f"[{t['warning']}]○[/{t['warning']}]", task["desc"])
                     
-        layout["tasks"].update(Panel(task_table, title="[bold green]📋 Task Manager[/bold green]", border_style="green", padding=(1, 2)))
+        layout["tasks"].update(Panel(task_table, title=f"[bold {t['success']}]📋 Task Manager[/bold {t['success']}]", border_style=t['success'], padding=(1, 2)))
         
         # Footer
         footer_content = Table.grid(expand=True)
         footer_content.add_column(width=3)
         footer_content.add_column(ratio=1)
         footer_content.add_row(
-            self.spinner, Text(self.status_message, style="bold cyan")
+            self.spinner, Text(self.status_message, style=f"bold {t['secondary']}")
         )
-        layout["footer"].update(Panel(footer_content, border_style="cyan"))
+        layout["footer"].update(Panel(footer_content, border_style=t['secondary']))
         
         return layout

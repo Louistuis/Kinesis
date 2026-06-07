@@ -58,12 +58,19 @@ class MacAgent:
         )
 
     def run(self, task: str):
-        self.history = [
-            types.Content(role="user", parts=[
-                types.Part.from_text(text=f"Please accomplish the following task: {task}")
-            ])
-        ]
-        
+        if not self.history:
+            self.history = [
+                types.Content(role="user", parts=[
+                    types.Part.from_text(text=f"Please accomplish the following task: {task}")
+                ])
+            ]
+        elif task:
+            self.history.append(
+                types.Content(role="user", parts=[
+                    types.Part.from_text(text=f"New instruction: {task}")
+                ])
+            )
+            
         previous_function_responses = []
         
         while True:

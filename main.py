@@ -119,6 +119,7 @@ def main():
         "/exit": "Exit Kinesis CLI",
         "/quit": "Exit Kinesis CLI",
         "/clear": "Clear the terminal screen and agent memory",
+        "/setup": "Restart the setup wizard to change API keys",
         "/status": "Show agent status and system info",
         "/update": "Pull latest code and instantly hot-reload Kinesis",
         "/tasks": "Inject tasks into the Task Manager (e.g., /tasks 'Find email', 'Reply')",
@@ -126,11 +127,15 @@ def main():
         "/log off": "Disable mission logging",
         "/log list": "List all saved mission logs",
         "/log <id>": "View a specific mission log by ID",
+        "/theme <id>": "Change UI theme (1: Cyberpunk, 2: Apple, 3: Hacker)",
+        "/delete <id>": "Delete a mission log by ID or 'last'",
+        "/resume <id>": "Resume a mission log by ID or 'last'",
     }
     completer = WordCompleter(list(slash_commands.keys()), ignore_case=True)
 
     global_tasks = []
     logging_enabled = False
+    current_theme = 1
 
     while True:
         try:
@@ -142,6 +147,16 @@ def main():
             if cmd in ['/exit', '/quit', 'exit', 'quit']:
                 console.print("[dim]Exiting Kinesis CLI... Goodbye.[/dim]")
                 break
+            if cmd == '/setup':
+                import os
+                setup_marker = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".setup_complete")
+                if os.path.exists(setup_marker):
+                    os.remove(setup_marker)
+                console.print("\n[dim]Restarting Kinesis for Setup Wizard...[/dim]")
+                try: cursor_process.terminate()
+                except: pass
+                import sys
+                os.execv(sys.executable, [sys.executable, __file__])
             if cmd == '/clear':
                 import os
                 os.system('clear')
@@ -200,6 +215,74 @@ def main():
                 else:
                     console.print("[dim]Usage: /log on | /log off | /log list | /log [ID][/dim]")
                 continue
+            if task.lower().startswith('/theme '):
+                theme_str = task.lower().split()[1]
+                if theme_str in ['1', '2', '3']:
+                    current_theme = int(theme_str)
+                    from ui.dashboard import THEMES
+                    t = THEMES[current_theme]
+                    console.print(f"[{t['success']}]Theme {current_theme} activated.[/{t['success']}]")
+                else:
+                    console.print("[dim]Invalid theme. Use 1, 2, or 3.[/dim]")
+                continue
+            if task.lower().startswith('/delete '):
+                arg = task.lower().split()[1]
+                import os
+                logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
+                if not os.path.exists(logs_dir):
+                    console.print("[dim]No logs found.[/dim]")
+                    continue
+                target_file = None
+                if arg == 'last':
+                    files = [f for f in os.listdir(logs_dir) if f.endswith('.json')]
+                    if files:
+                        files.sort(key=lambda x: os.path.getmtime(os.path.join(logs_dir, x)), reverse=True)
+                        target_file = os.path.join(logs_dir, files[0])
+                else:
+                    pot_file = os.path.join(logs_dir, f"{arg}.json")
+                    if os.path.exists(pot_file): target_file = pot_file
+                if target_file and os.path.exists(target_file):
+                    os.remove(target_file)
+                    console.print(f"[bold red]Log deleted.[/bold red]")
+                else:
+                    console.print(f"[dim]Log not found.[/dim]")
+                continue
+            if task.lower().startswith('/resume '):
+                arg = task.lower().split()[1]
+                import os, json
+                logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
+                target_file = None
+                if arg == 'last':
+                    files = [f for f in os.listdir(logs_dir) if f.endswith('.json')]
+                    if files:
+                        files.sort(key=lambda x: os.path.getmtime(os.path.join(logs_dir, x)), reverse=True)
+                        target_file = os.path.join(logs_dir, files[0])
+                else:
+                    pot_file = os.path.join(logs_dir, f"{arg}.json")
+                    if os.path.exists(pot_file): target_file = pot_file
+                if target_file and os.path.exists(target_file):
+                    with open(target_file, 'r') as f: data = json.load(f)
+                    agent.history = []
+                    global_tasks.clear()
+                    from google.genai import types
+                    agent.history.append(types.Content(role="user", parts=[types.Part.from_text(text=f"Please accomplish the following task: {data['directive']}")]))
+                    for act in data.get('actions', []):
+                        action_name = act.get('action')
+                        args_dict = act.get('args', {})
+                        agent.history.append(types.Content(role="model", parts=[types.Part.from_function_call(name=action_name, args=args_dict)]))
+                        agent.history.append(types.Content(role="user", parts=[types.Part.from_function_response(name=action_name, response={"status": "success", "info": "Action replayed from log"})]))
+                        if action_name == 'manage_tasks':
+                            t_action = args_dict.get('action')
+                            t_desc = args_dict.get('task_description')
+                            if t_action == 'add': global_tasks.append({"desc": t_desc, "status": "pending"})
+                            elif t_action == 'complete':
+                                for t in global_tasks:
+                                    if t['desc'] == t_desc: t['status'] = "completed"
+                            elif t_action == 'clear': global_tasks.clear()
+                    console.print(f"[bold green]Mission '{data.get('title')}' resumed. Memory and Tasks restored. Press Enter to continue.[/bold green]")
+                else:
+                    console.print("[dim]Log not found.[/dim]")
+                continue
             if task.lower().startswith('/tasks '):
                 tasks_str = task[7:].strip()
                 tasks_list = [t.strip() for t in tasks_str.split(',') if t.strip()]
@@ -236,7 +319,7 @@ def main():
                 continue
                 
             
-            dashboard = LiveDashboard(task)
+            dashboard = LiveDashboard(task, theme_id=current_theme)
             dashboard.tasks = global_tasks
             step_counter = 1
             
