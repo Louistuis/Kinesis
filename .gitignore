@@ -6,3 +6,5 @@ cursor_pos.txt
 *.jpg
 *.png
 .env
+
+.setup_complete

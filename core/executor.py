@@ -1,4 +1,4 @@
-from config import model_to_native_coords
+from core.config import model_to_native_coords
 
 class ActionExecutor:
     def __init__(self, bridge):

@@ -7,7 +7,7 @@ from rich.text import Text
 from rich.theme import Theme
 from rich.rule import Rule
 from rich.live import Live
-from dashboard import LiveDashboard
+from ui.dashboard import LiveDashboard
 from prompt_toolkit import PromptSession
 from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.styles import Style
@@ -20,7 +20,7 @@ warnings.filterwarnings("ignore")
 logging.getLogger().setLevel(logging.ERROR)
 logging.getLogger("google.genai").setLevel(logging.CRITICAL)
 
-from agent import MacAgent
+from core.agent import MacAgent
 
 # Custom premium theme
 custom_theme = Theme({
@@ -36,7 +36,7 @@ def main():
     # Check for setup wizard
     setup_marker = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".setup_complete")
     if not os.path.exists(setup_marker):
-        import wizard
+        from ui import wizard
         wizard.run_setup_wizard()
         
     # Load env vars after potential wizard setup
@@ -54,7 +54,7 @@ def main():
 """
     console.print(Panel(Markdown(welcome_text), border_style="cyan", padding=(1, 2)))
     
-    from mac_os_bridge import MacBridge
+    from core.mac_os_bridge import MacBridge
     import subprocess
     import os
     
@@ -62,7 +62,7 @@ def main():
     screens = bridge.get_screens()
     
     if len(screens) > 1:
-        overlay_args = [sys.executable, "overlay.py"]
+        overlay_args = [sys.executable, "ui/overlay.py"]
         for s in screens:
             overlay_args.extend([str(s["appkit_x"]), str(s["appkit_y"]), str(s["w"]), str(s["h"]), str(s["index"])])
             
@@ -86,7 +86,7 @@ def main():
         bridge.set_active_screen((screens[0]["x"], screens[0]["y"], screens[0]["w"], screens[0]["h"]))
 
     # Spawn Phantom Cursor
-    cursor_process = subprocess.Popen([sys.executable, "cursor.py"], cwd=os.path.dirname(os.path.abspath(__file__)))
+    cursor_process = subprocess.Popen([sys.executable, "ui/cursor.py"], cwd=os.path.dirname(os.path.abspath(__file__)))
 
     import atexit
     def cleanup():
