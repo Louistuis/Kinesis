@@ -108,10 +108,10 @@ class ActionExecutor:
                 elif direction == "up":
                     clicks = abs(clicks)
                 
-                # macOS PyAutoGUI scroll is in pixels, so '1' is nothing.
-                # If the AI passed '1' (e.g. 1 click), we multiply it by 500 to scroll a page.
+                # macOS PyAutoGUI scroll is in lines.
+                # If the AI passed '1' (e.g. 1 click), we multiply it by 15 to scroll ~15 lines smoothly.
                 if abs(clicks) < 10:
-                    clicks *= 500
+                    clicks *= 15
                     
                 self.bridge.execute_scroll_action(clicks)
                 action_executed = True

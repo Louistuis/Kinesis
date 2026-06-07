@@ -185,16 +185,16 @@ class MacBridge:
         """Scrolls the screen by the specified amount. Positive=Up, Negative=Down."""
         # macOS scroll direction might be inverted depending on user settings. 
         # Typically, positive values scroll up, negative scroll down.
-        # We use kCGScrollEventUnitPixel because many modern macOS apps (like Safari/Chrome) 
-        # ignore Line-based synthetic scroll events.
-        # We animate the scroll to simulate human trackpad inertia and ensure modern apps register it.
-        steps = 15
+        # We animate the scroll line-by-line to simulate human trackpad inertia and bypass velocity limits.
+        steps = abs(clicks)
+        if steps == 0:
+            return
+            
         sleep_interval = 0.015
-        amount_per_step = clicks / steps
+        direction = 1 if clicks > 0 else -1
         
         for _ in range(steps):
-            event = Quartz.CGEventCreateScrollWheelEvent(None, Quartz.kCGScrollEventUnitPixel, 1, int(amount_per_step))
-            Quartz.CGEventPost(Quartz.kCGHIDEventTap, event)
+            pyautogui.scroll(direction)
             time.sleep(sleep_interval)
             
     def wait(self, seconds: float = 1.5):
