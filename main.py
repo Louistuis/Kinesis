@@ -118,11 +118,14 @@ def main():
         "/help": "Show available commands",
         "/exit": "Exit Kinesis CLI",
         "/quit": "Exit Kinesis CLI",
-        "/clear": "Clear the terminal screen",
+        "/clear": "Clear the terminal screen and agent memory",
         "/status": "Show agent status and system info",
         "/update": "Pull latest code and instantly hot-reload Kinesis",
+        "/tasks": "Inject tasks into the Task Manager (e.g., /tasks 'Find email', 'Reply')",
     }
     completer = WordCompleter(list(slash_commands.keys()), ignore_case=True)
+
+    global_tasks = []
 
     while True:
         try:
@@ -138,6 +141,16 @@ def main():
                 import os
                 os.system('clear')
                 console.clear()
+                agent.history = []
+                global_tasks.clear()
+                console.print("[dim]Terminal, agent memory, and task manager cleared.[/dim]")
+                continue
+            if task.lower().startswith('/tasks '):
+                tasks_str = task[7:].strip()
+                tasks_list = [t.strip() for t in tasks_str.split(',') if t.strip()]
+                for t in tasks_list:
+                    global_tasks.append({"desc": t, "status": "pending"})
+                console.print(f"[bold green]Injected {len(tasks_list)} tasks into the Task Manager.[/bold green]")
                 continue
             if cmd == '/help':
                 help_text = "**Available Slash Commands:**\n\n"
@@ -169,6 +182,7 @@ def main():
                 
             
             dashboard = LiveDashboard(task)
+            dashboard.tasks = global_tasks
             step_counter = 1
             
             import time
@@ -190,34 +204,48 @@ def main():
                             action_name = event['action_name']
                             args = event['args']
                             
-                            if action_name == "mouse_action":
+                            if action_name == "manage_tasks":
+                                act_type = args.get('action')
+                                desc = args.get('task_description')
+                                if act_type == 'add':
+                                    dashboard.add_task(desc)
+                                elif act_type == 'complete':
+                                    dashboard.complete_task(desc)
+                                elif act_type == 'clear':
+                                    dashboard.clear_tasks()
+                                    global_tasks.clear()
+                                    
+                                icon = "📋 "
+                                action_desc = f"[bold green]TASK MANAGER[/bold green]"
+                                target = f"{act_type.upper()}: {desc}"
+                            elif action_name == "mouse_action":
                                 icon = "🖱️ "
-                                desc = f"[bold green]{args.get('action').upper()}[/bold green]"
+                                action_desc = f"[bold green]{args.get('action').upper()}[/bold green]"
                                 target = f"Model: ({args.get('x')}, {args.get('y')})"
                                 if event.get('native_coords'):
                                     target += f" ➡️  [bold yellow]Native: {event['native_coords']}[/bold yellow]"
                             elif action_name == "keyboard_action":
                                 icon = "⌨️ "
-                                desc = f"[bold green]{args.get('action').upper()}[/bold green]"
+                                action_desc = f"[bold green]{args.get('action').upper()}[/bold green]"
                                 target = f"Text: '{args.get('text', '')}' | Keys: {args.get('keys', [])}"
                             elif action_name == "shell_action":
                                 icon = "🐚 "
-                                desc = f"[bold green]EXECUTE SHELL[/bold green]"
+                                action_desc = f"[bold green]EXECUTE SHELL[/bold green]"
                                 target = f"[dim]{args.get('command', '')}[/dim]"
-                            elif action_name == "scroll_action":
+                            elif action_name == "scroll_action" or action_name == "scroll_document":
                                 icon = "🖱️ "
-                                desc = f"[bold green]SCROLL[/bold green]"
-                                target = f"Clicks: {args.get('clicks', 0)}"
+                                action_desc = f"[bold green]SCROLL[/bold green]"
+                                target = f"Clicks: {args.get('clicks', args.get('amount', 0))}"
                             elif action_name == "wait_action":
                                 icon = "⏳ "
-                                desc = f"[bold green]WAIT[/bold green]"
+                                action_desc = f"[bold green]WAIT[/bold green]"
                                 target = f"{args.get('seconds', 2)} seconds"
                             else:
                                 icon = "⚙️ "
-                                desc = f"[bold green]{action_name}[/bold green]"
+                                action_desc = f"[bold green]{action_name}[/bold green]"
                                 target = str(args)
                                 
-                            dashboard.add_action(step_counter, icon, desc, target)
+                            dashboard.add_action(step_counter, icon, action_desc, target)
                             step_counter += 1
                             
                         elif event["type"] == "complete":

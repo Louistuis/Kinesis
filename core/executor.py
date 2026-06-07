@@ -110,6 +110,14 @@ class ActionExecutor:
                 direction = args.get("direction", "down")
                 clicks = int(args.get("amount", args.get("clicks", 1000)))
                 
+                # Ensure the window has focus before scrolling blindly
+                if "coordinate" not in args and "x" not in args:
+                    # Move to center of logical screen and click to focus
+                    center_x, center_y = logical_width // 2, logical_height // 2
+                    x_native, y_native = model_to_native_coords(center_x, center_y, logical_width, logical_height)
+                    self.bridge.execute_mouse_action("move", x_native, y_native)
+                    self.bridge.execute_mouse_action("click", x_native, y_native)
+                
                 # If direction is down, scroll amount should be negative (on most macOS setups)
                 if direction == "down":
                     clicks = -abs(clicks)
@@ -138,6 +146,10 @@ class ActionExecutor:
                     self.bridge.execute_keyboard_action("press", keys=key)
                 else:
                     self.bridge.execute_keyboard_action("press", keys=[str(key)])
+                action_executed = True
+                
+            elif name == "manage_tasks":
+                yield event
                 action_executed = True
                 
             else:
