@@ -187,8 +187,15 @@ class MacBridge:
         # Typically, positive values scroll up, negative scroll down.
         # We use kCGScrollEventUnitPixel because many modern macOS apps (like Safari/Chrome) 
         # ignore Line-based synthetic scroll events.
-        event = Quartz.CGEventCreateScrollWheelEvent(None, Quartz.kCGScrollEventUnitPixel, 1, clicks)
-        Quartz.CGEventPost(Quartz.kCGHIDEventTap, event)
+        # We animate the scroll to simulate human trackpad inertia and ensure modern apps register it.
+        steps = 15
+        sleep_interval = 0.015
+        amount_per_step = clicks / steps
+        
+        for _ in range(steps):
+            event = Quartz.CGEventCreateScrollWheelEvent(None, Quartz.kCGScrollEventUnitPixel, 1, int(amount_per_step))
+            Quartz.CGEventPost(Quartz.kCGHIDEventTap, event)
+            time.sleep(sleep_interval)
             
     def wait(self, seconds: float = 1.5):
         """Wait for UI render."""
