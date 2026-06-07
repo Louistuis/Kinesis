@@ -65,10 +65,10 @@ class LiveDashboard:
         
         # Action Log Table
         table = Table(show_header=True, header_style="bold magenta", expand=True, border_style="magenta", box=None)
-        table.add_column("Step", width=4, justify="center")
-        table.add_column("Type", width=4, justify="center")
-        table.add_column("Action", style="cyan", width=15)
-        table.add_column("Target / Details", style="dim")
+        table.add_column("Step", width=4, justify="center", no_wrap=True)
+        table.add_column("Type", width=4, justify="center", no_wrap=True)
+        table.add_column("Action", style="cyan", width=15, no_wrap=True, overflow="ellipsis")
+        table.add_column("Target / Details", style="dim", no_wrap=True, overflow="ellipsis")
         
         for act in self.actions:
             table.add_row(act[0], act[1], act[2], act[3])
@@ -82,7 +82,7 @@ class LiveDashboard:
         # Task Manager Panel
         task_table = Table.grid(padding=(0, 1))
         task_table.add_column(style="bold", width=3)
-        task_table.add_column(style="white")
+        task_table.add_column(style="white", no_wrap=True, overflow="ellipsis")
         
         if not self.tasks:
             task_table.add_row("", "[dim italic]No active subtasks...[/dim italic]")
@@ -97,9 +97,10 @@ class LiveDashboard:
         
         # Footer
         footer_content = Table.grid(expand=True)
+        footer_content.add_column(width=3)
         footer_content.add_column(ratio=1)
         footer_content.add_row(
-            Text.assemble(self.spinner.render(0), " ", Text(self.status_message, style="bold cyan"))
+            self.spinner, Text(self.status_message, style="bold cyan")
         )
         layout["footer"].update(Panel(footer_content, border_style="cyan"))
         

@@ -1,0 +1,41 @@
+{
+  "id": "98d6f2",
+  "title": "Find and Open Lasagna",
+  "timestamp": "2026-06-07T21:44:08.919937",
+  "directive": "Find a recipe for lasagna and open it in Safari.",
+  "thoughts": [
+    {
+      "timestamp": "2026-06-07T21:44:08.920002",
+      "thought": "I should open Safari and search for lasagna recipes."
+    },
+    {
+      "timestamp": "2026-06-07T21:44:08.920006",
+      "thought": "I see a link to Allrecipes, I will click it."
+    }
+  ],
+  "actions": [
+    {
+      "timestamp": "2026-06-07T21:44:08.920004",
+      "action": "shell_action",
+      "args": {
+        "command": "open -a Safari 'https://google.com/search?q=lasagna+recipe'"
+      }
+    },
+    {
+      "timestamp": "2026-06-07T21:44:08.920005",
+      "action": "wait_action",
+      "args": {
+        "seconds": 2
+      }
+    },
+    {
+      "timestamp": "2026-06-07T21:44:08.920008",
+      "action": "mouse_action",
+      "args": {
+        "action": "left_click",
+        "x": 500,
+        "y": 600
+      }
+    }
+  ]
+}

@@ -122,10 +122,15 @@ def main():
         "/status": "Show agent status and system info",
         "/update": "Pull latest code and instantly hot-reload Kinesis",
         "/tasks": "Inject tasks into the Task Manager (e.g., /tasks 'Find email', 'Reply')",
+        "/log on": "Enable mission logging and AI auto-naming",
+        "/log off": "Disable mission logging",
+        "/log list": "List all saved mission logs",
+        "/log <id>": "View a specific mission log by ID",
     }
     completer = WordCompleter(list(slash_commands.keys()), ignore_case=True)
 
     global_tasks = []
+    logging_enabled = False
 
     while True:
         try:
@@ -144,6 +149,56 @@ def main():
                 agent.history = []
                 global_tasks.clear()
                 console.print("[dim]Terminal, agent memory, and task manager cleared.[/dim]")
+                continue
+            if task.lower().startswith('/log'):
+                args = task.lower().split()
+                if len(args) == 2 and args[1] == 'on':
+                    logging_enabled = True
+                    console.print("[bold green]Logging enabled.[/bold green]")
+                elif len(args) == 2 and args[1] == 'off':
+                    logging_enabled = False
+                    console.print("[dim]Logging disabled.[/dim]")
+                elif len(args) == 2 and args[1] == 'list':
+                    import os, json
+                    from rich.table import Table
+                    logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
+                    if not os.path.exists(logs_dir) or not os.listdir(logs_dir):
+                        console.print("[dim]No logs found.[/dim]")
+                    else:
+                        table = Table(title="Mission Logs", show_header=True, header_style="bold magenta")
+                        table.add_column("ID", style="cyan")
+                        table.add_column("Title", style="green")
+                        table.add_column("Timestamp", style="dim")
+                        logs = []
+                        for f in os.listdir(logs_dir):
+                            if f.endswith('.json'):
+                                with open(os.path.join(logs_dir, f), 'r') as log_file:
+                                    try:
+                                        data = json.load(log_file)
+                                        logs.append(data)
+                                    except:
+                                        pass
+                        logs.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+                        for log in logs:
+                            table.add_row(log.get('id', ''), log.get('title', ''), log.get('timestamp', '')[:16].replace('T', ' '))
+                        console.print(table)
+                elif len(args) == 2:
+                    log_id = args[1]
+                    import os, json
+                    logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
+                    log_file = os.path.join(logs_dir, f"{log_id}.json")
+                    if os.path.exists(log_file):
+                        with open(log_file, 'r') as f:
+                            data = json.load(f)
+                            console.print(f"\n[bold cyan]🧠 Mission: {data.get('title', 'Unknown')} ({data.get('id')})[/bold cyan]")
+                            console.print(f"[dim italic]Directive: {data.get('directive', '')}[/dim italic]\n")
+                            for i, act in enumerate(data.get('actions', [])):
+                                console.print(f"  [bold magenta]{i+1}.[/bold magenta] {act.get('action').upper()}: {act.get('args')}")
+                            console.print("\n")
+                    else:
+                        console.print(f"[bold red]Log {log_id} not found.[/bold red]")
+                else:
+                    console.print("[dim]Usage: /log on | /log off | /log list | /log [ID][/dim]")
                 continue
             if task.lower().startswith('/tasks '):
                 tasks_str = task[7:].strip()
@@ -189,6 +244,9 @@ def main():
             def get_renderable():
                 dashboard.spinner.render(time.time()) # tick spinner
                 return dashboard.build_layout()
+                
+            from core.logger import Logger
+            logger = Logger(task) if logging_enabled else None
             
             try:
                 with Live(get_renderable(), console=console, refresh_per_second=15) as live:
@@ -200,9 +258,11 @@ def main():
                             thought = event.get('thought')
                             if thought:
                                 dashboard.update_thought(thought)
+                                if logger: logger.add_thought(thought)
                                 
                             action_name = event['action_name']
                             args = event['args']
+                            if logger: logger.add_action(action_name, args)
                             
                             if action_name == "manage_tasks":
                                 act_type = args.get('action')
@@ -282,7 +342,9 @@ def main():
                         live.update(get_renderable())
                         
             finally:
-                pass
+                if logger:
+                    log_id, title = logger.save()
+                    console.print(f"[dim]Mission log saved as {log_id}: {title}[/dim]")
                 
         except pyautogui.FailSafeException:
             console.print("\n[bold red][FAIL-SAFE TRIGGERED] Mouse moved to screen corner. Execution aggressively aborted.[/bold red]")

@@ -1,0 +1,10 @@
+from core.logger import Logger
+logger = Logger("Find a recipe for lasagna and open it in Safari.")
+logger.add_thought("I should open Safari and search for lasagna recipes.")
+logger.add_action("shell_action", {"command": "open -a Safari 'https://google.com/search?q=lasagna+recipe'"})
+logger.add_action("wait_action", {"seconds": 2})
+logger.add_thought("I see a link to Allrecipes, I will click it.")
+logger.add_action("mouse_action", {"action": "left_click", "x": 500, "y": 600})
+log_id, title = logger.save()
+print("Saved Log:", log_id)
+print("Title:", title)
