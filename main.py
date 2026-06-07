@@ -4,10 +4,12 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.markdown import Markdown
 from rich.text import Text
-from rich.theme import Theme
-from rich.rule import Rule
 from rich.live import Live
+from rich.table import Table
+from rich.rule import Rule
 from ui.dashboard import LiveDashboard
+from core.agent import MacAgent
+from core.task_observer import TaskObserver
 from prompt_toolkit import PromptSession
 from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.styles import Style
@@ -370,6 +372,10 @@ def main():
             from core.logger import Logger
             logger = Logger(task) if logging_enabled else None
             
+            # Start background autonomous task observer
+            task_observer = TaskObserver(task, global_tasks, dashboard)
+            task_observer.initialize_tasks_async()
+            
             try:
                 with Live(get_renderable(), console=console, refresh_per_second=15) as live:
                     for event in agent.run(task):
@@ -386,21 +392,7 @@ def main():
                             args = event['args']
                             if logger: logger.add_action(action_name, args)
                             
-                            if action_name == "manage_tasks":
-                                act_type = args.get('action')
-                                desc = args.get('task_description')
-                                if act_type == 'add':
-                                    dashboard.add_task(desc)
-                                elif act_type == 'complete':
-                                    dashboard.complete_task(desc)
-                                elif act_type == 'clear':
-                                    dashboard.clear_tasks()
-                                    global_tasks.clear()
-                                    
-                                icon = "📋 "
-                                action_desc = f"[bold green]TASK MANAGER[/bold green]"
-                                target = f"{act_type.upper()}: {desc}"
-                            elif action_name == "mouse_action":
+                            if action_name == "mouse_action":
                                 icon = "🖱️ "
                                 action_desc = f"[bold green]{args.get('action').upper()}[/bold green]"
                                 target = f"Model: ({args.get('x')}, {args.get('y')})"
@@ -429,6 +421,9 @@ def main():
                                 
                             dashboard.add_action(step_counter, icon, action_desc, target)
                             step_counter += 1
+                            
+                            # Notify TaskObserver of the progress
+                            task_observer.update_tasks_async(thought or "", action_name, target)
                             
                         elif event["type"] == "ask_human":
                             question = event.get("question", "")

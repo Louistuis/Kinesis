@@ -36,18 +36,27 @@ class ActionExecutor:
                         yield event
                         self.bridge.execute_keyboard_action("type", text=args.get("text", ""))
                         action_executed = True
-                        return event, result_dict, task_finished, action_executed
+                        skip_mouse = True
+                    elif action == "key_press":
+                        yield event
+                        self.bridge.execute_keyboard_action("press", keys=[args.get("text", "")])
+                        action_executed = True
+                        skip_mouse = True
+                    else:
+                        skip_mouse = False
                 else:
                     x_model = int(args["x"])
                     y_model = int(args["y"])
                     action = args["action"]
+                    skip_mouse = False
                     
-                x_native, y_native = model_to_native_coords(x_model, y_model, logical_width, logical_height)
-                event["native_coords"] = (x_native, y_native)
-                
-                yield event
-                self.bridge.execute_mouse_action(action, x_native, y_native)
-                action_executed = True
+                if not skip_mouse:
+                    x_native, y_native = model_to_native_coords(x_model, y_model, logical_width, logical_height)
+                    event["native_coords"] = (x_native, y_native)
+                    
+                    yield event
+                    self.bridge.execute_mouse_action(action, x_native, y_native)
+                    action_executed = True
                 
             elif name == "keyboard_action":
                 yield event
@@ -138,6 +147,11 @@ class ActionExecutor:
                 yield event
                 seconds = int(args.get("seconds", 5))
                 self.bridge.wait(seconds)
+                action_executed = True
+                
+            elif name == "go_back":
+                yield event
+                self.bridge.execute_keyboard_action("press", keys=["command", "["])
                 action_executed = True
                 
             elif name == "key_combination":

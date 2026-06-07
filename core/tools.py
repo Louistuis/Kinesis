@@ -114,24 +114,7 @@ def get_tools():
                 "required": ["status", "report"]
             }
         },
-        {
-            "name": "manage_tasks",
-            "description": "Add, check off, or clear tasks from the Task Manager UI panel.",
-            "parameters": {
-                "type": "OBJECT",
-                "properties": {
-                    "action": {
-                        "type": "STRING",
-                        "description": "One of: add, complete, clear"
-                    },
-                    "task_description": {
-                        "type": "STRING",
-                        "description": "Description of the task to add or complete."
-                    }
-                },
-                "required": ["action"]
-            }
-        },
+
         {
             "name": "ask_human",
             "description": "Pause execution and ask the human user a question (e.g., for CAPTCHAs, passwords, or clarification on ambiguity).",
