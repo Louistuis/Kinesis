@@ -30,6 +30,18 @@ custom_theme = Theme({
 })
 
 def main():
+    import os
+    from dotenv import load_dotenv
+    
+    # Check for setup wizard
+    setup_marker = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".setup_complete")
+    if not os.path.exists(setup_marker):
+        import wizard
+        wizard.run_setup_wizard()
+        
+    # Load env vars after potential wizard setup
+    load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
+    
     console = Console(theme=custom_theme)
     
     welcome_text = """
