@@ -13,6 +13,7 @@ class MacBridge:
         self.active_screen_bbox = None  # (x, y, w, h)
         self.logical_width, self.logical_height = pyautogui.size()
         self.human_response = None
+        self.last_ai_mouse_pos = (self.logical_width // 2, self.logical_height // 2)
 
     def get_screens(self) -> list[dict]:
         """Returns a list of connected screens with their logical bounding boxes."""
@@ -127,6 +128,7 @@ class MacBridge:
         
         # Warp to AI target silently
         target_pos = (float(x), float(y))
+        self.last_ai_mouse_pos = target_pos
         
         if action == "move":
             move_event = Quartz.CGEventCreateMouseEvent(None, Quartz.kCGEventMouseMoved, target_pos, 0)
@@ -184,12 +186,21 @@ class MacBridge:
 
     def execute_scroll_action(self, clicks: int):
         """Scrolls the screen by the specified amount. Positive=Up, Negative=Down."""
-        # macOS scroll direction might be inverted depending on user settings. 
-        # Typically, positive values scroll up, negative scroll down.
-        # We animate the scroll line-by-line to simulate human trackpad inertia and bypass velocity limits.
         steps = abs(clicks)
         if steps == 0:
             return
+            
+        import Quartz
+        
+        # Save current physical mouse position
+        event = Quartz.CGEventCreate(None)
+        current_pos = Quartz.CGEventGetLocation(event)
+        
+        # Warp to AI's last known interaction point to ensure scroll targets the correct window
+        ai_pos = (float(self.last_ai_mouse_pos[0]), float(self.last_ai_mouse_pos[1]))
+        warp_event = Quartz.CGEventCreateMouseEvent(None, Quartz.kCGEventMouseMoved, ai_pos, 0)
+        Quartz.CGEventPost(Quartz.kCGHIDEventTap, warp_event)
+        time.sleep(0.02) # Allow macOS to register new focus
             
         sleep_interval = 0.015
         direction = 1 if clicks > 0 else -1
@@ -197,6 +208,10 @@ class MacBridge:
         for _ in range(steps):
             pyautogui.scroll(direction)
             time.sleep(sleep_interval)
+            
+        # Instantly restore hardware mouse position
+        restore_event = Quartz.CGEventCreateMouseEvent(None, Quartz.kCGEventMouseMoved, current_pos, 0)
+        Quartz.CGEventPost(Quartz.kCGHIDEventTap, restore_event)
             
     def wait(self, seconds: float = 1.5):
         """Wait for UI render."""
