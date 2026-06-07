@@ -102,7 +102,15 @@ class MacAgent:
             try:
                 response = self._query_model()
             except Exception as e:
-                yield {"type": "error", "message": f"Error communicating with model: {e}"}
+                import traceback
+                error_details = traceback.format_exc()
+                # Dump history to a file for debugging
+                try:
+                    with open("debug_history.txt", "w") as f:
+                        f.write(str(self.history))
+                except:
+                    pass
+                yield {"type": "error", "message": f"Error communicating with model: {e}\n{error_details}"}
                 break
 
             if response.candidates and hasattr(response.candidates[0], 'content') and response.candidates[0].content:
@@ -118,7 +126,9 @@ class MacAgent:
                 
             if not function_calls:
                 yield {"type": "info", "message": response.text}
-                break
+                yield {"type": "info", "message": "Model forgot to use a tool. Forcing retry..."}
+                self.history.append(types.Content(role="user", parts=[types.Part.from_text(text="You did not execute any tools. You MUST use a tool. If the task is finished, use `task_complete`. Otherwise, take your next action.")]))
+                continue
                 
             # 4. Execute Tools
             task_finished = False
@@ -128,8 +138,8 @@ class MacAgent:
                 name = fc.name
                 args = fc.args
                 
-                # Block chained actions
-                if action_executed_this_turn and name != "task_complete":
+                # Block chained actions, except for non-interacting tools
+                if action_executed_this_turn and name not in ["task_complete", "manage_tasks", "ask_human"]:
                     result_dict = {"error": "FATAL: Multiple actions chained. Wait for screenshot!", "url": "http://localhost"}
                     yield {"type": "info", "message": f"Blocked chained action: {name}"}
                     previous_function_responses.append(types.Part.from_function_response(name=name, response=result_dict))
