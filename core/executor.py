@@ -152,6 +152,16 @@ class ActionExecutor:
                 yield event
                 action_executed = True
                 
+            elif name == "ask_human":
+                question = args.get("question", "")
+                yield {"type": "ask_human", "question": question, "action_name": name, "args": args}
+                # At this point, the generator is suspended and control returns to main.py
+                # main.py will prompt the user, set self.bridge.human_response, and call next()
+                answer = self.bridge.human_response
+                result_dict["response"] = answer
+                self.bridge.human_response = None
+                action_executed = True
+                
             else:
                 error_msg = f"Unknown tool called: {name}. You MUST use only the provided tools (mouse_action, shell_action, etc.). Do NOT use {name}."
                 yield {"type": "error", "message": error_msg}

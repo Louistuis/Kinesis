@@ -127,8 +127,23 @@ def get_tools():
                 },
                 "required": ["action"]
             }
+        },
+        {
+            "name": "ask_human",
+            "description": "Pause execution and ask the human user a question (e.g., for CAPTCHAs, passwords, or clarification on ambiguity).",
+            "parameters": {
+                "type": "OBJECT",
+                "properties": {
+                    "question": {
+                        "type": "STRING",
+                        "description": "The exact question to ask the user in the terminal."
+                    }
+                },
+                "required": ["question"]
+            }
         }
     ]
+
 
     return [
         types.Tool(

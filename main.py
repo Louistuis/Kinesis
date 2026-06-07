@@ -248,6 +248,21 @@ def main():
                             dashboard.add_action(step_counter, icon, action_desc, target)
                             step_counter += 1
                             
+                        elif event["type"] == "ask_human":
+                            question = event.get("question", "")
+                            # Pause the live rendering briefly to ask the user
+                            live.stop()
+                            console.print(f"\n[bold yellow]🤖 KINESIS ASKS:[/bold yellow] {question}")
+                            answer = session.prompt("Your response > ")
+                            agent.bridge.human_response = answer
+                            
+                            # Add action to stream
+                            dashboard.add_action(step_counter, "💬 ", "[bold yellow]ASK HUMAN[/bold yellow]", f"Q: {question} | A: {answer}")
+                            step_counter += 1
+                            
+                            # Restart live rendering
+                            live.start()
+                            
                         elif event["type"] == "complete":
                             thought = event.get('thought')
                             if thought:

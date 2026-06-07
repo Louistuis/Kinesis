@@ -12,6 +12,7 @@ class MacBridge:
     def __init__(self):
         self.active_screen_bbox = None  # (x, y, w, h)
         self.logical_width, self.logical_height = pyautogui.size()
+        self.human_response = None
 
     def get_screens(self) -> list[dict]:
         """Returns a list of connected screens with their logical bounding boxes."""
