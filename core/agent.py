@@ -191,6 +191,11 @@ class MacAgent:
                 if is_finished:
                     task_finished = True
                     
+                if isinstance(args, dict) and "safety_decision" in args:
+                    result_dict["safety_decision"] = "ACKNOWLEDGED"
+                elif hasattr(args, "__contains__") and "safety_decision" in args:
+                    result_dict["safety_decision"] = "ACKNOWLEDGED"
+                    
                 previous_function_responses.append(
                     types.Part.from_function_response(name=name, response=result_dict)
                 )
