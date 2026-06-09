@@ -139,16 +139,27 @@ class MacAgent:
             if response.candidates and hasattr(response.candidates[0], 'content') and response.candidates[0].content:
                 self.history.append(response.candidates[0].content)
 
-            # 3. Handle Empty Responses
+            # 3. Extract Thought Safely
+            thought_text = ""
+            try:
+                if response.candidates and hasattr(response.candidates[0], "content") and response.candidates[0].content:
+                    for part in response.candidates[0].content.parts:
+                        if hasattr(part, "text") and part.text:
+                            thought_text += part.text + "\n"
+            except Exception:
+                pass
+            thought_text = thought_text.strip()
+
+            # 4. Handle Empty Responses
             function_calls = response.function_calls
-            if not function_calls and not response.text:
+            if not function_calls and not thought_text:
                 finish_reason = response.candidates[0].finish_reason if response.candidates else "UNKNOWN"
                 yield {"type": "info", "message": f"Empty response. Reason: {finish_reason}. Forcing retry..."}
                 self.history.append(types.Content(role="user", parts=[types.Part.from_text(text="You returned an empty response. Please execute a tool call or output your reasoning.")]))
                 continue
                 
             if not function_calls:
-                yield {"type": "info", "message": response.text}
+                yield {"type": "info", "message": thought_text}
                 yield {"type": "info", "message": "Model forgot to use a tool. Forcing retry..."}
                 self.history.append(types.Content(role="user", parts=[types.Part.from_text(text="You did not execute any tools. You MUST use a tool. If the task is finished, use `task_complete`. Otherwise, take your next action.")]))
                 continue
@@ -177,7 +188,7 @@ class MacAgent:
                     previous_function_responses.append(types.Part.from_function_response(name=name, response=result_dict))
                     continue
                 
-                gen = self.executor.execute_tool(name, args, logical_width, logical_height, response.text)
+                gen = self.executor.execute_tool(name, args, logical_width, logical_height, thought_text)
                 while True:
                     try:
                         yielded_val = next(gen)

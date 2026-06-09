@@ -90,11 +90,16 @@ class LiveDashboard:
         if not self.tasks:
             task_table.add_row("", f"[{t['dim']} italic]No active subtasks...[/{t['dim']} italic]")
         else:
+            first_pending = True
             for task in self.tasks:
                 if task["status"] == "completed":
                     task_table.add_row(f"[{t['success']}]✓[/{t['success']}]", f"[{t['dim']} strike]{task['desc']}[/{t['dim']} strike]")
                 else:
-                    task_table.add_row(f"[{t['warning']}]○[/{t['warning']}]", task["desc"])
+                    if first_pending:
+                        task_table.add_row(self.spinner, f"[bold {t['warning']}]{task['desc']}[/bold {t['warning']}]")
+                        first_pending = False
+                    else:
+                        task_table.add_row(f"[{t['dim']}]○[/{t['dim']}]", task["desc"])
                     
         layout["tasks"].update(Panel(task_table, title=f"[bold {t['success']}]📋 Task Manager[/bold {t['success']}]", border_style=t['success'], padding=(1, 2)))
         

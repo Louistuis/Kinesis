@@ -68,6 +68,7 @@ class TaskObserver:
                 f"The agent just thought: '{recent_thought}'\n"
                 f"The agent just executed action: '{recent_action}' on target '{recent_target}'.\n\n"
                 f"Analyze the agent's progress. Has it completed any pending tasks? Has it discovered new steps that need to be added?\n"
+                f"CRITICAL: If the agent explicitly states in its thought that it is STUCK IN A LOOP or wants to skip a popup/roadblock, YOU MUST IMMEDIATELY delete the blocked tasks and generate an alternative task list to bypass the roadblock.\n"
                 f"Update the 'status' of completed tasks to 'completed'. Add new tasks as dictionaries with 'desc' and 'status'='pending' if needed.\n"
                 f"Output exactly the updated JSON array of task objects. Nothing else."
             )
