@@ -25,7 +25,7 @@ SLASH_COMMANDS = {
     "/save on": "Enable mission saving and AI auto-naming",
     "/save off": "Disable mission saving",
     "/result <id>": "View the comprehensive final report of a mission",
-    "/result act <id>": "View the chronological actions taken in a mission",
+    "/result log <id>": "View the chronological actions taken in a mission",
     "/delete <id>": "Delete a mission log by ID or 'last'",
     "/resume <id>": "Resume a mission log by ID or 'last'",
     "/debug <id>": "View an advanced execution trace and latency for a mission",
@@ -117,7 +117,7 @@ class CommandProcessor:
             
         if task.lower().startswith('/result '):
             args = task.lower().split()
-            if len(args) == 2 or (len(args) == 3 and args[1] == 'act'):
+            if len(args) == 2 or (len(args) == 3 and args[1] == 'log'):
                 arg = args[1] if len(args) == 2 else args[2]
                 logs_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "logs")
                 target_file = None
@@ -133,7 +133,7 @@ class CommandProcessor:
                 if target_file and os.path.exists(target_file):
                     with open(target_file, 'r') as f: data = json.load(f)
                     
-                    if len(args) == 3 and args[1] == 'act':
+                    if len(args) == 3 and args[1] == 'log':
                         self.console.print(f"\n[bold cyan]🧠 Mission Actions: {data.get('title', 'Unknown')} ({data.get('id')})[/bold cyan]")
                         self.console.print(f"[dim italic]Directive: {data.get('directive', '')}[/dim italic]\n")
                         for i, act in enumerate(data.get('actions', [])):
@@ -151,7 +151,7 @@ class CommandProcessor:
                 else:
                     self.console.print(f"[bold red]Result {arg} not found.[/bold red]")
             else:
-                self.console.print("[dim]Usage: /result <id> | /result act <id>[/dim]")
+                self.console.print("[dim]Usage: /result <id> | /result log <id>[/dim]")
             return True
             
         if task.lower().startswith('/delete '):
@@ -304,7 +304,7 @@ Kinesis supports two authentication modes, configurable via `/setup`:
 - **Autonomous Control**: Give Kinesis a directive (e.g. `play some chess`), and it will break it down into tasks and execute it entirely on its own.
 - **Chain of Thought (CoT)**: Kinesis natively explains its reasoning step-by-step in the Internal Brain card.
 - **Voice Mode**: Use `/voice on` to have Kinesis audibly speak its thought process as it works!
-- **Mission Logs**: Use `/save on` to record your missions. View them later with `/list`, `/result <id>`, and `/result act <id>`.
+- **Mission Logs**: Use `/save on` to record your missions. View them later with `/list`, `/result <id>`, and `/result log <id>`.
 - **Hot-Reload Updates**: Use `/update` to pull the latest codebase from GitHub and instantly restart Kinesis without closing your terminal.
 
 **Safety**
