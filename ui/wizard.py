@@ -27,7 +27,7 @@ It looks like this is your first time launching Kinesis. Let's get everything se
         default="1"
     )
     
-    env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+    env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
     
     if auth_choice == "1":
         existing_key = os.environ.get("GEMINI_API_KEY")
@@ -81,7 +81,7 @@ Please ensure your Terminal app (or IDE) has the following permissions enabled i
     console.print("\n[bold magenta]Step 3: Global Alias[/bold magenta]")
     if Confirm.ask("Would you like to install the `kinesis` alias to your ~/.zshrc so you can run it from anywhere?"):
         zshrc_path = os.path.expanduser("~/.zshrc")
-        kinesis_dir = os.path.dirname(os.path.abspath(__file__))
+        kinesis_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         alias_cmd = f'\nalias kinesis="cd {kinesis_dir} && {sys.executable} main.py"\n'
         
         try:
@@ -94,7 +94,7 @@ Please ensure your Terminal app (or IDE) has the following permissions enabled i
         console.print("[dim]Skipped alias setup.[/dim]")
         
     # 4. Finalize
-    setup_marker = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".setup_complete")
+    setup_marker = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".setup_complete")
     with open(setup_marker, "w") as f:
         f.write("Setup complete.")
         
