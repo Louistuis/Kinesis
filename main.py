@@ -119,6 +119,7 @@ def main():
 
     slash_commands = {
         "/help": "Show available commands",
+        "/info": "Show help and information regarding Kinesis setup and features",
         "/exit": "Exit Kinesis CLI",
         "/quit": "Exit Kinesis CLI",
         "/clear": "Clear the terminal screen and agent memory",
@@ -334,8 +335,31 @@ def main():
             if cmd == '/status':
                 width, height = pyautogui.size()
                 from core.config import KINESIS_VERSION
-                status_text = f"**System Information:**\n- Primary Display Resolution: {width}x{height}\n- Fail-Safe: Active\n- API Model: gemini-3-flash-preview\n- Build Version: {KINESIS_VERSION}"
+                log_status = "Enabled" if logging_enabled else "Disabled"
+                voice_status = "Enabled" if voice_enabled else "Disabled"
+                status_text = f"**System Information:**\n- Primary Display Resolution: {width}x{height}\n- Fail-Safe: Active\n- API Model: gemini-3-flash-preview\n- Build Version: {KINESIS_VERSION}\n- Logging: {log_status}\n- Voice TTS: {voice_status}"
                 console.print(Panel(Markdown(status_text), border_style="magenta"))
+                continue
+            if cmd == '/info':
+                info_text = """
+# Welcome to Kinesis Info 📘
+
+**Authentication**
+Kinesis supports two authentication modes, configurable via `/setup`:
+1. **API Key**: A raw Gemini API Key.
+2. **OAuth / Application Default Credentials**: Uses your local `gcloud` or `gemini cli` credentials. You can set this up interactively by running `/setup` and choosing Option 3 to securely authenticate via your browser!
+
+**Features**
+- **Autonomous Control**: Give Kinesis a directive (e.g. `play some chess`), and it will break it down into tasks and execute it entirely on its own.
+- **Chain of Thought (CoT)**: Kinesis natively explains its reasoning step-by-step in the Internal Brain card.
+- **Voice Mode**: Use `/voice on` to have Kinesis audibly speak its thought process as it works!
+- **Mission Logs**: Use `/log on` to record your missions. View them later with `/list` and `/result <id>`.
+- **Hot-Reload Updates**: Use `/update` to pull the latest codebase from GitHub and instantly restart Kinesis without closing your terminal.
+
+**Safety**
+- **Fail-Safe**: If Kinesis is running amok, physically move your mouse cursor to any corner of your screen (e.g. top-left) to instantly trigger the PyAutoGUI fail-safe and abort execution!
+"""
+                console.print(Panel(Markdown(info_text), border_style="cyan", title="[bold white]Kinesis Overview[/bold white]"))
                 continue
             if cmd == '/version':
                 from core.config import KINESIS_VERSION
