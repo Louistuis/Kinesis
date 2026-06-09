@@ -4,14 +4,17 @@ from google import genai
 from google.genai import types
 
 from core.mac_os_bridge import MacBridge
-from core.config import GEMINI_API_KEY, MODEL_NAME, WAIT_TIME_SECONDS
+from core.config import GEMINI_API_KEY, GEMINI_AUTH_MODE, MODEL_NAME, WAIT_TIME_SECONDS
 from core.tools import get_tools
 from core.prompts import SYSTEM_INSTRUCTION
 from core.executor import ActionExecutor
 
 class MacAgent:
     def __init__(self, bridge=None):
-        self.client = genai.Client(api_key=GEMINI_API_KEY)
+        if GEMINI_AUTH_MODE == "oauth":
+            self.client = genai.Client()
+        else:
+            self.client = genai.Client(api_key=GEMINI_API_KEY)
         self.bridge = bridge if bridge else MacBridge()
         self.executor = ActionExecutor(self.bridge)
         self.history = []

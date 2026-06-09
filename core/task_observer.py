@@ -1,14 +1,17 @@
 import threading
 import json
 from google import genai
-from core.config import GEMINI_API_KEY
+from core.config import GEMINI_API_KEY, GEMINI_AUTH_MODE
 
 class TaskObserver:
     def __init__(self, directive: str, global_tasks: list, dashboard):
         self.directive = directive
         self.global_tasks = global_tasks
         self.dashboard = dashboard
-        self.client = genai.Client(api_key=GEMINI_API_KEY)
+        if GEMINI_AUTH_MODE == "oauth":
+            self.client = genai.Client()
+        else:
+            self.client = genai.Client(api_key=GEMINI_API_KEY)
         self.model_name = "gemini-3.1-flash-lite-preview"
         self._lock = threading.Lock()
         

@@ -1,9 +1,11 @@
 import os
 
 # API Configuration
+GEMINI_AUTH_MODE = os.environ.get("GEMINI_AUTH_MODE", "apikey")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-if not GEMINI_API_KEY:
-    raise ValueError("GEMINI_API_KEY environment variable is required")
+
+if GEMINI_AUTH_MODE == "apikey" and not GEMINI_API_KEY:
+    raise ValueError("GEMINI_API_KEY environment variable is required when using API Key auth.")
 
 MODEL_NAME = "gemini-3-flash-preview"
 KINESIS_VERSION = "0.9.6-beta"

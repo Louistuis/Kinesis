@@ -14,30 +14,49 @@ It looks like this is your first time launching Kinesis. Let's get everything se
 """
     console.print(Panel(Markdown(welcome_text), border_style="cyan", padding=(1, 2)))
     
-    # 1. API Key Setup
-    console.print("\n[bold magenta]Step 1: Google Gemini API Key[/bold magenta]")
+    # 1. Authentication Setup
+    console.print("\n[bold magenta]Step 1: Authentication Method[/bold magenta]")
     
-    existing_key = os.environ.get("GEMINI_API_KEY")
-    api_key = ""
+    auth_choice = Prompt.ask(
+        "Choose your authentication method:\n"
+        "[1] API Key (Recommended for most users)\n"
+        "[2] OAuth / Application Default Credentials (e.g. Gemini CLI, gcloud)\n"
+        "Enter 1 or 2", 
+        choices=["1", "2"], 
+        default="1"
+    )
     
-    if existing_key:
-        masked_key = f"{existing_key[:4]}...{existing_key[-4:]}" if len(existing_key) > 8 else "***"
-        console.print(f"[green]Auto-detected an existing GEMINI_API_KEY in your environment: {masked_key}[/green]")
-        if Confirm.ask("Would you like to use this existing key?"):
-            api_key = existing_key
-            
-    if not api_key:
-        console.print("Kinesis requires a Gemini API Key to function. You can get one for free at [cyan]https://aistudio.google.com/app/apikey[/cyan]")
-        api_key = Prompt.ask("Enter your [bold yellow]GEMINI_API_KEY[/bold yellow]")
-        
-    if not api_key or not api_key.strip():
-        console.print("[red]API Key cannot be empty. Setup aborted.[/red]")
-        sys.exit(1)
-        
     env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
-    with open(env_path, "w") as f:
-        f.write(f"GEMINI_API_KEY={api_key.strip()}\n")
-    console.print(f"[green]✔ Saved API Key to {env_path}[/green]")
+    
+    if auth_choice == "1":
+        existing_key = os.environ.get("GEMINI_API_KEY")
+        api_key = ""
+        
+        if existing_key:
+            masked_key = f"{existing_key[:4]}...{existing_key[-4:]}" if len(existing_key) > 8 else "***"
+            console.print(f"[green]Auto-detected an existing GEMINI_API_KEY in your environment: {masked_key}[/green]")
+            if Confirm.ask("Would you like to use this existing key?"):
+                api_key = existing_key
+                
+        if not api_key:
+            console.print("Kinesis requires a Gemini API Key to function. You can get one for free at [cyan]https://aistudio.google.com/app/apikey[/cyan]")
+            api_key = Prompt.ask("Enter your [bold yellow]GEMINI_API_KEY[/bold yellow]")
+            
+        if not api_key or not api_key.strip():
+            console.print("[red]API Key cannot be empty. Setup aborted.[/red]")
+            sys.exit(1)
+            
+        with open(env_path, "w") as f:
+            f.write(f"GEMINI_AUTH_MODE=apikey\nGEMINI_API_KEY={api_key.strip()}\n")
+        console.print(f"[green]✔ Saved API Key to {env_path}[/green]")
+        
+    else:
+        console.print("\n[yellow]OAuth Mode Selected.[/yellow]")
+        console.print("Kinesis will use your local Application Default Credentials (ADC).")
+        console.print("Make sure you have authenticated via the Gemini CLI or by running: [cyan]gcloud auth application-default login[/cyan]")
+        with open(env_path, "w") as f:
+            f.write("GEMINI_AUTH_MODE=oauth\n")
+        console.print(f"[green]✔ Saved OAuth Mode to {env_path}[/green]")
     
     # 2. Permissions Guide
     console.print("\n[bold magenta]Step 2: macOS Permissions[/bold magenta]")
