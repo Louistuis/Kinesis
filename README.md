@@ -5,69 +5,86 @@
 **The Next-Generation Autonomous macOS Desktop Agent**
 
 [![macOS](https://img.shields.io/badge/macOS-Apple_Silicon_Optimized-000000?style=for-the-badge&logo=apple&logoColor=white)](#)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-3776AB.svg?style=for-the-badge&logo=python&logoColor=white)](#)
-[![Gemini](https://img.shields.io/badge/Gemini_2.5_Computer_Use-Powered-1A73E8?style=for-the-badge&logo=google&logoColor=white)](#)
+[![Python & Node](https://img.shields.io/badge/Node.js%20&%20Python-Powered-3776AB.svg?style=for-the-badge&logo=python&logoColor=white)](#)
+[![Gemini 3 Flash](https://img.shields.io/badge/Gemini_3_Flash-Powered-1A73E8?style=for-the-badge&logo=google&logoColor=white)](#)
+[![NPM Version](https://img.shields.io/npm/v/kinesis-agent?style=for-the-badge&logo=npm&color=CB3837)](#)
 
-*Kinesis translates high-level human directives into native macOS UI interactions in real-time, executing complex multi-step workflows visually.*
+> *Kinesis translates high-level human directives into native macOS UI interactions in real-time, executing complex multi-step workflows visually.*
 
 </div>
 
----
+<br>
 
-## ⚡ Overview
-**Kinesis CLI** is a highly autonomous, intelligent macOS desktop agent designed to execute complex natural language directives directly on your computer. Powered by Google's state-of-the-art **Gemini 2.5 Computer Use** models, Kinesis operates just like a human: it looks at your screen, reasons about what it sees, and takes precise control of the mouse and keyboard to accomplish the mission.
+## ⚡ The Agent that Actually Sees
 
-Unlike traditional macro scripts or brittle RPA tools, Kinesis adapts dynamically to unexpected pop-ups, changing UI layouts, and unstructured web pages.
+**Kinesis CLI** is a highly autonomous, intelligent macOS desktop agent designed to execute complex natural language directives directly on your computer. Powered by Google's lightning-fast **Gemini 3 Flash** Computer Use model, Kinesis operates just like a human: it looks at your screen, reasons about what it sees, and takes precise control of your mouse and keyboard to accomplish the mission.
+
+Unlike traditional macro scripts or brittle RPA tools, Kinesis adapts dynamically to unexpected pop-ups, changing UI layouts, and completely unstructured web pages.
 
 ---
 
 ## 🌟 Premium Capabilities
 
-### 🤖 True Autonomy & Chain of Thought
-Give Kinesis an overarching goal (e.g., *"play a game of chess on chess.com and win"*). Kinesis natively breaks it down into granular sub-tasks, displays its internal **Chain of Thought (CoT)** reasoning live in the terminal, and executes the entire sequence of steps on its own.
+<table>
+<tr>
+<td width="50%">
 
-### 🎯 Native OS Integration & Phantom Cursor
-Built exclusively for macOS using PyObjC, CoreGraphics, and AppKit. Kinesis interacts directly with the lowest levels of the OS. It features a custom **Phantom Visual Cursor**—a dynamic purple pointer with fluid LERP-accelerated motion blur, sonar "ripple" click animations, and intelligent idle fading that travels seamlessly with you across Mission Control and Fullscreen Spaces.
+### 🤖 True Autonomy & CoT
+Give Kinesis an overarching goal (e.g., *"play chess on chess.com and win"*). Kinesis natively breaks it down into granular sub-tasks, displays its internal **Chain of Thought (CoT)** live in the terminal, and executes the sequence entirely on its own.
+
+</td>
+<td width="50%">
+
+### 🎯 Phantom Visual Cursor
+Built exclusively for macOS, Kinesis features a custom **Phantom Visual Cursor**—a dynamic purple pointer with fluid LERP-accelerated motion blur, sonar "ripple" click animations, and intelligent idle fading that travels seamlessly across Mission Control.
+
+</td>
+</tr>
+<tr>
+<td>
 
 ### 🗣️ Voice TTS Mode
-Enable Voice Mode (`/voice on`) to have Kinesis audibly speak its thought process out loud in real-time using native macOS text-to-speech, keeping you informed without needing to read the terminal!
+Enable Voice Mode (`/voice on`) to have Kinesis audibly speak its thought process out loud in real-time using native macOS text-to-speech, keeping you informed without needing to stare at the terminal!
 
-### 📊 Comprehensive Mission Logging
-Every action, thought, and sub-task is automatically logged (`/log on`). Kinesis generates comprehensive markdown reports after every mission, which you can easily review via the built-in `/list` and `/result` commands.
+</td>
+<td>
 
 ### 🛡️ Iron-Clad Fail-Safe
-Kinesis is built with safety as a priority. If the agent begins acting unexpectedly, physically throw your real mouse to any corner of your screen (e.g., the top-left). This instantly triggers a hardware-level PyAutoGUI **Fail-Safe** and aborts all execution.
+Kinesis is built with safety as a priority. If the agent begins acting unexpectedly, simply throw your physical mouse to any corner of your screen (e.g., the top-left). This instantly triggers a hardware-level **Fail-Safe** and aborts execution.
+
+</td>
+</tr>
+</table>
 
 ---
 
-## 🛠️ Quick Start
+## 🛠️ Lightning Fast Setup
 
-### 1. Requirements
+We've completely eliminated the headache of managing Python virtual environments, cloning repositories, and manually installing requirements.
+
+### 1. Prerequisites
 - **macOS** (Apple Silicon natively supported and highly recommended)
-- **Python 3.10+**
-- **System Permissions:** You must grant *Screen Recording* and *Accessibility* permissions to your Terminal/IDE.
+- **Node.js** & **Python 3.10+**
+- **Permissions:** You must grant *Screen Recording* and *Accessibility* permissions to your Terminal/IDE.
 
-### 2. Installation
+### 2. One-Line Installation
+Install Kinesis globally using NPM:
 ```bash
-git clone https://github.com/Louistuis/Kinesis.git
-cd Kinesis
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+npm install -g kinesis-agent
 ```
 
 ### 3. Launch & Interactive Setup
-Just run Kinesis! On your first boot, an interactive **Setup Wizard** will gracefully guide you through configuring your API keys and generating a global `kinesis` terminal alias.
+Just type the command below from anywhere on your Mac! On your first boot, an interactive **Setup Wizard** will gracefully guide you through configuring your Google Gemini API key or OAuth credentials.
 ```bash
-python main.py
+kinesis
 ```
-*Kinesis supports both raw Gemini API Keys and local gcloud Application Default Credentials (OAuth)!*
+*Behind the scenes, the Node wrapper will instantly build the Python environment and proxy you into the native Agent CLI!*
 
 ---
 
 ## 🎮 Command Interface
 
-Kinesis features a robust, auto-completing CLI environment. Below are some of the core slash commands you can use:
+Kinesis features a robust, auto-completing CLI environment. Below are some of the core slash commands you can use while inside the Kinesis terminal:
 
 | Command | Description |
 | :--- | :--- |
@@ -92,7 +109,7 @@ Once inside the dashboard, provide a natural language directive:
 ```text
 🚀 DIRECTIVE > Open Safari, search for the latest Apple stock price, and summarize it for me.
 ```
-Sit back, monitor the **Internal Brain** and **Task Manager** cards in your terminal, and watch Kinesis navigate the UI!
+Sit back, monitor the **Internal Brain** and **Task Manager** cards in your terminal, and watch Kinesis navigate your Mac!
 
 ---
 
