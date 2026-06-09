@@ -119,6 +119,9 @@ class MacBridge:
         except Exception:
             pass
             
+        # Wait for the visual cursor LERP animation to arrive before physically executing
+        time.sleep(0.5)
+            
         # 2. Phantom Execution (CoreGraphics instantaneous warp)
         import Quartz
         

@@ -287,7 +287,7 @@ class CommandProcessor:
             from core.config import KINESIS_VERSION
             log_status = "Enabled" if self.state.logging_enabled else "Disabled"
             voice_status = "Enabled" if self.state.voice_enabled else "Disabled"
-            status_text = f"**System Information:**\n- Primary Display Resolution: {width}x{height}\n- Fail-Safe: Active\n- API Model: gemini-3-flash-preview\n- Build Version: {KINESIS_VERSION}\n- Logging: {log_status}\n- Voice TTS: {voice_status}"
+            status_text = f"**System Information:**\n- Primary Display Resolution: {width}x{height}\n- Fail-Safe: Active\n- API Model: gemini-3-flash-preview\n- Build Version: {KINESIS_VERSION}\n- Saving: {log_status}\n- Voice TTS: {voice_status}"
             self.console.print(Panel(Markdown(status_text), border_style="magenta"))
             return True
             
