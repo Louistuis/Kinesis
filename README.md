@@ -84,13 +84,20 @@ kinesis
 
 ## 🎮 Command Interface
 
-Kinesis features a robust, auto-completing CLI environment. Below are some of the core slash commands you can use while inside the Kinesis terminal:
+Kinesis features a robust, auto-completing CLI environment. Below are the core slash commands you can use while inside the Kinesis terminal:
 
 | Command | Description |
 | :--- | :--- |
 | **`/help`** | View all available slash commands. |
 | **`/info`** | Show a detailed user manual and overview of Kinesis capabilities. |
 | **`/status`** | View current system resolution, API model, and active toggles. |
+| **`/screen <n>`** | Hot-swap the active monitor Kinesis operates on. |
+| **`/speed <fast\|normal\|slow>`** | Change agent execution speed dynamically at runtime. |
+| **`/pause`** | Toggle pause/resume of the agent loop mid-mission. |
+| **`/history`** | Show a table of the last 20 actions from the current session. |
+| **`/screenshot`** | Capture an instant screenshot and save it to the `screenshots/` directory. |
+| **`/cost`** | View live estimated API cost, call count, and step count. |
+| **`/model`** | Print the currently active AI model. |
 | **`/voice on\|off`** | Toggle audible TTS chain-of-thought readouts. |
 | **`/save on\|off`** | Toggle automatic mission logging and report generation. |
 | **`/list`** | View a table of all your previously logged missions. |
@@ -100,6 +107,18 @@ Kinesis features a robust, auto-completing CLI environment. Below are some of th
 | **`/tasks <csv>`** | Manually inject tasks into the agent's Task Manager. |
 | **`/update`** | Hot-reload the agent! Pulls the latest code from GitHub and restarts Kinesis without closing your terminal. |
 | **`/setup`** | Restart the Authentication Wizard to switch API keys or modes. |
+
+---
+
+## 🖥️ The 5-Panel TUI Dashboard
+
+Kinesis v1.0.0 introduces a massive, cyberpunk-themed 5-panel terminal UI that gives you god-mode visibility into the agent's brain:
+
+1. **Header**: Live mission directive, elapsed timer, and step counter.
+2. **⚡ Action Stream**: A color-coded, scrolling feed of the agent's precise physical actions (mouse clicks, keyboard typing, scrolling) with relative timestamps.
+3. **🧠 Internal Brain**: The live, syntax-highlighted Chain of Thought (CoT) engine where Kinesis reasons about its next move.
+4. **📋 Task Manager**: A dynamic checklist breaking down your overarching directive into actionable sub-tasks, complete with a visual progress bar and active task spinner.
+5. **📊 System Vitals**: Real-time metrics tracking total steps, API calls, estimated session cost, and screen resolution.
 
 ---
 

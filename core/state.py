@@ -74,6 +74,9 @@ class CLIState:
         elif m > 0:
             return f"{m}m {s}s"
         return f"{s}s"
+    
+    def get_elapsed_seconds(self) -> float:
+        return time.time() - self.session_start_time
 
 
 def _simplify_args(args: dict) -> str:
