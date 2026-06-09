@@ -6,6 +6,7 @@ if not GEMINI_API_KEY:
     raise ValueError("GEMINI_API_KEY environment variable is required")
 
 MODEL_NAME = "gemini-2.5-computer-use-preview-10-2025"
+REASONING_MODEL_NAME = "gemini-3.5-flash"
 KINESIS_VERSION = "0.9.5-beta"
 
 # Resolution and Scaling Config

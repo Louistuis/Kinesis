@@ -351,8 +351,24 @@ def main():
             if cmd == '/update':
                 console.print("\n[dim]Pulling latest changes from GitHub...[/dim]")
                 import subprocess
+                subprocess.run(["git", "checkout", "master"])
                 subprocess.run(["git", "pull", "origin", "master"])
-                console.print("[bold green]Update complete. Hot-reloading Kinesis...[/bold green]")
+                console.print("[bold green]Update complete (Master). Hot-reloading Kinesis...[/bold green]")
+                # Kill background phantom cursor process
+                try:
+                    cursor_process.terminate()
+                except:
+                    pass
+                # Physically replace current python process with a new one
+                import os
+                os.execv(sys.executable, [sys.executable, __file__])
+                
+            if cmd == '/update exp':
+                console.print("\n[dim]Pulling experimental changes from GitHub...[/dim]")
+                import subprocess
+                subprocess.run(["git", "checkout", "experimental"])
+                subprocess.run(["git", "pull", "origin", "experimental"])
+                console.print("[bold green]Update complete (Experimental). Hot-reloading Kinesis...[/bold green]")
                 # Kill background phantom cursor process
                 try:
                     cursor_process.terminate()

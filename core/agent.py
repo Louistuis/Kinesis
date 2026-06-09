@@ -1,12 +1,13 @@
 import json
 import io
+import traceback
 from google import genai
 from google.genai import types
 
 from core.mac_os_bridge import MacBridge
-from core.config import GEMINI_API_KEY, MODEL_NAME, WAIT_TIME_SECONDS
-from core.tools import get_tools
-from core.prompts import SYSTEM_INSTRUCTION
+from core.config import GEMINI_API_KEY, MODEL_NAME, REASONING_MODEL_NAME, WAIT_TIME_SECONDS
+from core.tools import get_brain_tools, get_hands_tools
+from core.prompts import BRAIN_SYSTEM_INSTRUCTION, HANDS_SYSTEM_INSTRUCTION
 from core.executor import ActionExecutor
 
 class MacAgent:
@@ -16,21 +17,15 @@ class MacAgent:
         self.executor = ActionExecutor(self.bridge)
         self.history = []
         
-        self.tools = get_tools()
-        self.system_instruction = SYSTEM_INSTRUCTION
+        self.brain_tools = get_brain_tools()
+        self.hands_tools = get_hands_tools()
 
-    def _prepare_vision_payload(self, previous_responses):
-        """Captures screen and packages it with previous responses for Gemini."""
+    def _prepare_vision_payload(self, previous_responses, prompt_text="Current screen. What is your next thought and tool action?"):
         screenshot, logical_width, logical_height = self.bridge.capture_screen()
         
         img_byte_arr = io.BytesIO()
         if screenshot.mode in ('RGBA', 'P'):
             screenshot = screenshot.convert('RGB')
-            
-        try:
-            screenshot.save("debug_screenshot.jpg", format='JPEG', quality=85)
-        except Exception:
-            pass
             
         screenshot.save(img_byte_arr, format='JPEG', quality=85)
         img_bytes = img_byte_arr.getvalue()
@@ -41,18 +36,30 @@ class MacAgent:
             
         parts.extend([
             types.Part.from_bytes(data=img_bytes, mime_type='image/jpeg'),
-            types.Part.from_text(text="Current screen. What is your next thought and tool action?")
+            types.Part.from_text(text=prompt_text)
         ])
         return parts, logical_width, logical_height
 
-    def _query_model(self):
-        """Queries the Gemini model and returns the response."""
+    def _query_brain(self):
         return self.client.models.generate_content(
-            model=MODEL_NAME,
+            model=REASONING_MODEL_NAME,
             contents=self.history,
             config=types.GenerateContentConfig(
-                system_instruction=self.system_instruction,
-                tools=self.tools,
+                system_instruction=BRAIN_SYSTEM_INSTRUCTION,
+                tools=self.brain_tools,
+                temperature=0.0
+            )
+        )
+
+    def _query_hands(self, instruction: str, logical_width: int, logical_height: int):
+        parts, _, _ = self._prepare_vision_payload([], prompt_text=f"HANDOFF INSTRUCTION: {instruction}")
+        
+        return self.client.models.generate_content(
+            model=MODEL_NAME,
+            contents=[types.Content(role="user", parts=parts)],
+            config=types.GenerateContentConfig(
+                system_instruction=HANDS_SYSTEM_INSTRUCTION,
+                tools=self.hands_tools,
                 temperature=0.0
             )
         )
@@ -74,104 +81,95 @@ class MacAgent:
         previous_function_responses = []
         
         while True:
-            # 1. Capture & Prepare
-            yield {"type": "status", "message": "Capturing screen..."}
+            # 1. Capture & Prepare for Brain
+            yield {"type": "status", "message": "Capturing screen for Brain..."}
             parts, logical_width, logical_height = self._prepare_vision_payload(previous_function_responses)
             previous_function_responses = []
             
-            # To drastically reduce latency, we strip previous screenshots from the history.
-            # We only need the latest screenshot to know what to do next. The text history preserves context.
             for content in self.history:
-                if content is None:
-                    continue
+                if content is None: continue
                 if content.role == "user" and hasattr(content, "parts"):
-                    # Keep only non-image parts
-                    new_parts = []
-                    for p in content.parts:
-                        if not hasattr(p, "inline_data") or not p.inline_data:
-                            if not hasattr(p, "image") or not p.image:
-                                new_parts.append(p)
+                    new_parts = [p for p in content.parts if not (hasattr(p, "inline_data") and p.inline_data) and not (hasattr(p, "image") and p.image)]
                     content.parts = new_parts
             
             self.history.append(types.Content(role="user", parts=parts))
             
-            # 2. Query Model
-            yield {"type": "info", "message": "📸 Capturing screen and querying Gemini Vision API (this usually takes 5-10 seconds)..."}
-            yield {"type": "status", "message": "Reasoning... querying Gemini..."}
+            yield {"type": "info", "message": f"🧠 Querying Brain ({REASONING_MODEL_NAME})..."}
             
             try:
-                import json
-                with open('cursor_pos.txt', 'w') as f:
-                    # We don't have x,y here, just state
-                    f.write(json.dumps({"state": "idle"}))
+                with open('cursor_pos.txt', 'w') as f: f.write(json.dumps({"state": "idle"}))
             except: pass
             
             try:
-                response = self._query_model()
+                brain_response = self._query_brain()
             except Exception as e:
-                import traceback
-                error_details = traceback.format_exc()
-                # Dump history to a file for debugging
-                try:
-                    with open("debug_history.txt", "w") as f:
-                        f.write(str(self.history))
-                except:
-                    pass
-                yield {"type": "error", "message": f"Error communicating with model: {e}\n{error_details}"}
+                yield {"type": "error", "message": f"Brain Error: {e}\n{traceback.format_exc()}"}
                 break
 
-            if response.candidates and hasattr(response.candidates[0], 'content') and response.candidates[0].content:
-                self.history.append(response.candidates[0].content)
+            if brain_response.candidates and hasattr(brain_response.candidates[0], 'content') and brain_response.candidates[0].content:
+                self.history.append(brain_response.candidates[0].content)
 
-            # 3. Handle Empty Responses
-            function_calls = response.function_calls
-            if not function_calls and not response.text:
-                finish_reason = response.candidates[0].finish_reason if response.candidates else "UNKNOWN"
-                yield {"type": "info", "message": f"Empty response. Reason: {finish_reason}. Forcing retry..."}
-                self.history.append(types.Content(role="user", parts=[types.Part.from_text(text="You returned an empty response. Please execute a tool call or output your reasoning.")]))
-                continue
-                
+            function_calls = brain_response.function_calls
             if not function_calls:
-                yield {"type": "info", "message": response.text}
-                yield {"type": "info", "message": "Model forgot to use a tool. Forcing retry..."}
-                self.history.append(types.Content(role="user", parts=[types.Part.from_text(text="You did not execute any tools. You MUST use a tool. If the task is finished, use `task_complete`. Otherwise, take your next action.")]))
+                self.history.append(types.Content(role="user", parts=[types.Part.from_text(text="You MUST use a tool. Use handoff_action or task_complete.")]))
                 continue
                 
-            # 4. Execute Tools
             task_finished = False
-            action_executed_this_turn = False
             
             for fc in function_calls:
                 name = fc.name
                 args = fc.args
+                brain_thought = brain_response.text
                 
-                # Block chained actions, except for non-interacting tools
-                if action_executed_this_turn and name not in ["task_complete", "manage_tasks", "ask_human"]:
-                    result_dict = {"error": "FATAL: Multiple actions chained. Wait for screenshot!", "url": "http://localhost"}
-                    yield {"type": "info", "message": f"Blocked chained action: {name}"}
-                    previous_function_responses.append(types.Part.from_function_response(name=name, response=result_dict))
-                    continue
-                
-                gen = self.executor.execute_tool(name, args, logical_width, logical_height, response.text)
-                while True:
-                    try:
-                        yielded_val = next(gen)
-                        yield yielded_val
-                    except StopIteration as e:
-                        event, result_dict, is_finished, is_executed = e.value
-                        break
-                        
-                if is_executed:
-                    action_executed_this_turn = True
-                if is_finished:
-                    task_finished = True
+                if name == "handoff_action":
+                    instruction = args.get("instruction", "")
                     
-                previous_function_responses.append(
-                    types.Part.from_function_response(name=name, response=result_dict)
-                )
-                
-                if action_executed_this_turn and "error" not in result_dict and not task_finished:
-                    self.bridge.wait(0.5)
+                    # Log Brain's handoff
+                    yield {"type": "action", "action_name": "handoff", "args": {"instruction": instruction}, "thought": brain_thought, "native_coords": None}
+                    
+                    yield {"type": "info", "message": f"✋ Handoff to Hands ({MODEL_NAME}): '{instruction}'"}
+                    
+                    try:
+                        hands_response = self._query_hands(instruction, logical_width, logical_height)
+                        hands_calls = hands_response.function_calls
+                        if hands_calls:
+                            hc = hands_calls[0]
+                            # Execute Hands Tool
+                            gen = self.executor.execute_tool(hc.name, hc.args, logical_width, logical_height, "")
+                            while True:
+                                try:
+                                    yielded_val = next(gen)
+                                    yield yielded_val
+                                except StopIteration as e:
+                                    _, result_dict, _, _ = e.value
+                                    break
+                                    
+                            previous_function_responses.append(
+                                types.Part.from_function_response(name=name, response={"status": "Hands executed successfully", "hands_tool_called": hc.name})
+                            )
+                        else:
+                            previous_function_responses.append(
+                                types.Part.from_function_response(name=name, response={"error": "Hands failed to execute any tool."})
+                            )
+                    except Exception as e:
+                        previous_function_responses.append(
+                            types.Part.from_function_response(name=name, response={"error": f"Hands Error: {str(e)}"})
+                        )
+                else:
+                    # Execute Brain Tool Directly (shell_action, task_complete, etc.)
+                    gen = self.executor.execute_tool(name, args, logical_width, logical_height, brain_thought)
+                    while True:
+                        try:
+                            yielded_val = next(gen)
+                            yield yielded_val
+                        except StopIteration as e:
+                            _, result_dict, is_finished, _ = e.value
+                            if is_finished: task_finished = True
+                            break
+                            
+                    previous_function_responses.append(
+                        types.Part.from_function_response(name=name, response=result_dict)
+                    )
 
             if task_finished:
                 break
