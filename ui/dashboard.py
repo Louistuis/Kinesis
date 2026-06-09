@@ -145,9 +145,10 @@ class LiveDashboard:
         grid.add_column(justify="center", ratio=2)
         grid.add_column(justify="right", ratio=1)
 
+        from core.config import KINESIS_VERSION
         left = Text.from_markup(
             f"[bold {t['accent']}]◉ KINESIS[/bold {t['accent']}]"
-            f" [bold {t['dim']}]v1.0.0[/bold {t['dim']}]"
+            f" [bold {t['dim']}]v{KINESIS_VERSION}[/bold {t['dim']}]"
         )
 
         directive = self.task_directive

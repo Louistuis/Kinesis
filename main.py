@@ -39,7 +39,6 @@ def print_banner(console: Console):
     for line, style in BANNER_LINES:
         console.print(f"  [{style}]{line}[/{style}]")
     console.print()
-    console.print("  [dim]v1.0.0 • Autonomous macOS Computer-Use Agent • Powered by Gemini 3 Flash[/dim]")
     console.print()
 
 def boot_check(console: Console, label: str, detail: str, success: bool = True):
@@ -66,11 +65,13 @@ def main():
     # ── Premium Boot Sequence ──────────────────────────────────
     os.system('clear')
     print_banner(console)
+    from core.config import MODEL_NAME, KINESIS_VERSION, GEMINI_AUTH_MODE
+    console.print(f"  [dim]v{KINESIS_VERSION} • Autonomous macOS Computer-Use Agent • Powered by Gemini 3 Flash[/dim]")
+    console.print()
     console.print(Rule(style="dim blue"))
     console.print()
     
     # Boot checks with staggered animation
-    from core.config import MODEL_NAME, KINESIS_VERSION, GEMINI_AUTH_MODE
     
     auth_label = "OAuth / ADC" if GEMINI_AUTH_MODE == "oauth" else "API Key"
     boot_check(console, "Authentication", f"{auth_label} → {MODEL_NAME}")
