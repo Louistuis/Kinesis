@@ -1,5 +1,5 @@
 {
-  "name": "kinesis-cli",
+  "name": "kinesis-agent",
   "version": "1.0.0",
   "description": "Autonomous macOS Computer-Use Desktop Agent powered by Gemini 2.5",
   "main": "bin/kinesis.js",
