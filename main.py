@@ -341,7 +341,7 @@ def main():
             if cmd == '/status':
                 width, height = pyautogui.size()
                 from core.config import KINESIS_VERSION
-                status_text = f"**System Information:**\n- Primary Display Resolution: {width}x{height}\n- Fail-Safe: Active\n- API Model: gemini-2.5-computer-use-preview-10-2025\n- Build Version: {KINESIS_VERSION}"
+                status_text = f"**System Information:**\n- Primary Display Resolution: {width}x{height}\n- Fail-Safe: Active\n- API Model: gemini-3-flash-preview\n- Build Version: {KINESIS_VERSION}"
                 console.print(Panel(Markdown(status_text), border_style="magenta"))
                 continue
             if cmd == '/version':
