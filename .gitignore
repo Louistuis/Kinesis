@@ -8,3 +8,8 @@ cursor_pos.txt
 .env
 
 .setup_complete
+
+# NPM
+node_modules/
+package-lock.json
+

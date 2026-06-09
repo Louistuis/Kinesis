@@ -1,0 +1,31 @@
+{
+  "name": "kinesis-cli",
+  "version": "1.0.0",
+  "description": "Autonomous macOS Computer-Use Desktop Agent powered by Gemini 2.5",
+  "main": "bin/kinesis.js",
+  "bin": {
+    "kinesis": "./bin/kinesis.js",
+    "kinesis-cli": "./bin/kinesis.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Louistuis/Kinesis.git"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "gemini",
+    "computer-use",
+    "automation",
+    "macos"
+  ],
+  "author": "Louis",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Louistuis/Kinesis/issues"
+  },
+  "homepage": "https://github.com/Louistuis/Kinesis#readme"
+}
