@@ -92,9 +92,10 @@ Kinesis features a robust, auto-completing CLI environment. Below are some of th
 | **`/info`** | Show a detailed user manual and overview of Kinesis capabilities. |
 | **`/status`** | View current system resolution, API model, and active toggles. |
 | **`/voice on\|off`** | Toggle audible TTS chain-of-thought readouts. |
-| **`/log on\|off`** | Toggle automatic mission logging and report generation. |
+| **`/save on\|off`** | Toggle automatic mission logging and report generation. |
 | **`/list`** | View a table of all your previously logged missions. |
 | **`/result <id>`** | View the comprehensive final report of a specific mission. |
+| **`/result act <id>`** | View the chronological actions taken in a specific mission. |
 | **`/resume <id>`** | Instantly restore the agent's memory and tasks from a previous session! |
 | **`/tasks <csv>`** | Manually inject tasks into the agent's Task Manager. |
 | **`/update`** | Hot-reload the agent! Pulls the latest code from GitHub and restarts Kinesis without closing your terminal. |

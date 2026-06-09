@@ -4,7 +4,7 @@ from typing import List, Dict, Any
 @dataclass
 class CLIState:
     global_tasks: List[Dict[str, Any]] = field(default_factory=list)
-    logging_enabled: bool = False
+    logging_enabled: bool = True
     voice_enabled: bool = False
     
     def clear_tasks(self):

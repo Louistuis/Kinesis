@@ -22,10 +22,10 @@ SLASH_COMMANDS = {
     "/update": "Pull latest code and instantly hot-reload Kinesis",
     "/tasks": "Inject tasks into the Task Manager (e.g., /tasks 'Find email', 'Reply')",
     "/list": "List all saved mission logs and results",
-    "/log on": "Enable mission logging and AI auto-naming",
-    "/log off": "Disable mission logging",
-    "/log <id>": "View a specific mission log by ID",
+    "/save on": "Enable mission saving and AI auto-naming",
+    "/save off": "Disable mission saving",
     "/result <id>": "View the comprehensive final report of a mission",
+    "/result act <id>": "View the chronological actions taken in a mission",
     "/delete <id>": "Delete a mission log by ID or 'last'",
     "/resume <id>": "Resume a mission log by ID or 'last'",
     "/debug <id>": "View an advanced execution trace and latency for a mission",
@@ -70,30 +70,16 @@ class CommandProcessor:
             self.console.print("[dim]Terminal, agent memory, and task manager cleared.[/dim]")
             return True
             
-        if task.lower().startswith('/log'):
+        if task.lower().startswith('/save'):
             args = task.lower().split()
             if len(args) == 2 and args[1] == 'on':
                 self.state.logging_enabled = True
-                self.console.print("[bold green]Logging enabled.[/bold green]")
+                self.console.print("[bold green]Mission saving enabled.[/bold green]")
             elif len(args) == 2 and args[1] == 'off':
                 self.state.logging_enabled = False
-                self.console.print("[dim]Logging disabled.[/dim]")
-            elif len(args) == 2:
-                log_id = args[1]
-                logs_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "logs")
-                log_file = os.path.join(logs_dir, f"{log_id}.json")
-                if os.path.exists(log_file):
-                    with open(log_file, 'r') as f:
-                        data = json.load(f)
-                        self.console.print(f"\n[bold cyan]🧠 Mission: {data.get('title', 'Unknown')} ({data.get('id')})[/bold cyan]")
-                        self.console.print(f"[dim italic]Directive: {data.get('directive', '')}[/dim italic]\n")
-                        for i, act in enumerate(data.get('actions', [])):
-                            self.console.print(f"  [bold magenta]{i+1}.[/bold magenta] {act.get('action').upper()}: {act.get('args')}")
-                        self.console.print("\n")
-                else:
-                    self.console.print(f"[bold red]Log {log_id} not found.[/bold red]")
+                self.console.print("[dim]Mission saving disabled.[/dim]")
             else:
-                self.console.print("[dim]Usage: /log on | /log off | /log [ID][/dim]")
+                self.console.print("[dim]Usage: /save on | /save off[/dim]")
             return True
             
         if task.lower().startswith('/voice'):
@@ -131,8 +117,8 @@ class CommandProcessor:
             
         if task.lower().startswith('/result '):
             args = task.lower().split()
-            if len(args) == 2:
-                arg = args[1]
+            if len(args) == 2 or (len(args) == 3 and args[1] == 'act'):
+                arg = args[1] if len(args) == 2 else args[2]
                 logs_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "logs")
                 target_file = None
                 if arg == 'last':
@@ -146,16 +132,26 @@ class CommandProcessor:
                     
                 if target_file and os.path.exists(target_file):
                     with open(target_file, 'r') as f: data = json.load(f)
-                    self.console.print(f"\n[bold cyan]🧠 Mission Result: {data.get('title', 'Unknown')} ({data.get('id')})[/bold cyan]")
-                    self.console.print(f"[dim italic]Directive: {data.get('directive', '')}[/dim italic]\n")
-                    report = data.get('report')
-                    if report:
-                        self.console.print(Panel(Markdown(report), title="[bold green]Final Report[/bold green]", border_style="green", padding=(1, 2)))
+                    
+                    if len(args) == 3 and args[1] == 'act':
+                        self.console.print(f"\n[bold cyan]🧠 Mission Actions: {data.get('title', 'Unknown')} ({data.get('id')})[/bold cyan]")
+                        self.console.print(f"[dim italic]Directive: {data.get('directive', '')}[/dim italic]\n")
+                        for i, act in enumerate(data.get('actions', [])):
+                            self.console.print(f"  [bold magenta]{i+1}.[/bold magenta] {act.get('action').upper()}: {act.get('args')}")
+                        self.console.print("\n")
                     else:
-                        self.console.print("[dim]No comprehensive report was generated for this mission.[/dim]")
-                    self.console.print("\n")
+                        self.console.print(f"\n[bold cyan]🧠 Mission Result: {data.get('title', 'Unknown')} ({data.get('id')})[/bold cyan]")
+                        self.console.print(f"[dim italic]Directive: {data.get('directive', '')}[/dim italic]\n")
+                        report = data.get('report')
+                        if report:
+                            self.console.print(Panel(Markdown(report), title="[bold green]Final Report[/bold green]", border_style="green", padding=(1, 2)))
+                        else:
+                            self.console.print("[dim]No comprehensive report was generated for this mission.[/dim]")
+                        self.console.print("\n")
                 else:
                     self.console.print(f"[bold red]Result {arg} not found.[/bold red]")
+            else:
+                self.console.print("[dim]Usage: /result <id> | /result act <id>[/dim]")
             return True
             
         if task.lower().startswith('/delete '):
@@ -308,7 +304,7 @@ Kinesis supports two authentication modes, configurable via `/setup`:
 - **Autonomous Control**: Give Kinesis a directive (e.g. `play some chess`), and it will break it down into tasks and execute it entirely on its own.
 - **Chain of Thought (CoT)**: Kinesis natively explains its reasoning step-by-step in the Internal Brain card.
 - **Voice Mode**: Use `/voice on` to have Kinesis audibly speak its thought process as it works!
-- **Mission Logs**: Use `/log on` to record your missions. View them later with `/list` and `/result <id>`.
+- **Mission Logs**: Use `/save on` to record your missions. View them later with `/list`, `/result <id>`, and `/result act <id>`.
 - **Hot-Reload Updates**: Use `/update` to pull the latest codebase from GitHub and instantly restart Kinesis without closing your terminal.
 
 **Safety**
