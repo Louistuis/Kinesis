@@ -363,7 +363,7 @@ def main():
             
             try:
                 with Live(get_renderable(), console=console, refresh_per_second=15) as live:
-                    for event in agent.run(task):
+                    for event in agent.run(task, global_tasks):
                         if event["type"] == "status" or event["type"] == "info":
                             dashboard.update_status(event['message'])
                             

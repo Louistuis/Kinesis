@@ -22,7 +22,7 @@ class MacAgent:
         self.tools = get_tools()
         self.system_instruction = SYSTEM_INSTRUCTION
 
-    def _prepare_vision_payload(self, previous_responses):
+    def _prepare_vision_payload(self, previous_responses, prompt_text="Current screen. What is your next thought and tool action?"):
         """Captures screen and packages it with previous responses for Gemini."""
         screenshot, logical_width, logical_height = self.bridge.capture_screen()
         
@@ -44,7 +44,7 @@ class MacAgent:
             
         parts.extend([
             types.Part.from_bytes(data=img_bytes, mime_type='image/jpeg'),
-            types.Part.from_text(text="Current screen. What is your next thought and tool action?")
+            types.Part.from_text(text=prompt_text)
         ])
         return parts, logical_width, logical_height
 
@@ -60,7 +60,7 @@ class MacAgent:
             )
         )
 
-    def run(self, task: str):
+    def run(self, task: str, global_tasks: list = None):
         if not self.history:
             self.history = [
                 types.Content(role="user", parts=[
@@ -79,7 +79,20 @@ class MacAgent:
         while True:
             # 1. Capture & Prepare
             yield {"type": "status", "message": "Capturing screen..."}
-            parts, logical_width, logical_height = self._prepare_vision_payload(previous_function_responses)
+            
+            prompt_text = "Current screen. What is your next thought and tool action?"
+            if global_tasks:
+                pending = [t['desc'] for t in global_tasks if t['status'] == 'pending']
+                completed = [t['desc'] for t in global_tasks if t['status'] == 'completed']
+                prompt_text = (
+                    f"Current screen.\n"
+                    f"YOUR MANDATORY CHECKLIST:\n"
+                    f"PENDING: {pending}\n"
+                    f"COMPLETED: {completed}\n\n"
+                    f"What is your next thought and tool action? You CANNOT call task_complete until all pending tasks are finished."
+                )
+                
+            parts, logical_width, logical_height = self._prepare_vision_payload(previous_function_responses, prompt_text=prompt_text)
             previous_function_responses = []
             
             # To drastically reduce latency, we strip previous screenshots from the history.
@@ -147,6 +160,15 @@ class MacAgent:
             for fc in function_calls:
                 name = fc.name
                 args = fc.args
+                
+                # Intercept task_complete if tasks are still pending
+                if name == "task_complete" and global_tasks:
+                    pending_tasks = [t['desc'] for t in global_tasks if t['status'] == 'pending']
+                    if pending_tasks:
+                        result_dict = {"error": f"FATAL: You cannot call task_complete yet. You still have pending tasks on your checklist: {pending_tasks}. You must complete them first."}
+                        yield {"type": "info", "message": f"Blocked task_complete due to pending tasks"}
+                        previous_function_responses.append(types.Part.from_function_response(name=name, response=result_dict))
+                        continue
                 
                 # Block chained actions, except for non-interacting tools
                 if action_executed_this_turn and name not in ["task_complete", "manage_tasks", "ask_human"]:

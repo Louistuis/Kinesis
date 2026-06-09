@@ -33,9 +33,9 @@ class TaskObserver:
                 f"You are the internal Task Manager for an autonomous AI agent.\n"
                 f"The agent was given this directive: '{self.directive}'\n\n"
                 f"Break this directive down into an EXHAUSTIVE, granular, step-by-step checklist of micro-tasks.\n"
-                f"Be very generous with the number of tasks. \n"
+                f"You MUST generate at least 5 to 10 distinct, highly granular steps.\n"
                 f"Output exactly a JSON array of strings representing the tasks. Nothing else.\n"
-                f"Example: [\"Open browser\", \"Navigate to google.com\", \"Search for cats\"]\n"
+                f"Example: [\"Open Spotlight search\", \"Search for 'System Settings'\", \"Click to open System Settings\", \"Click on 'Displays' in the sidebar\", \"Locate the resolution scaling options\", \"Set resolution to Default\"]\n"
             )
             try:
                 response = self.client.models.generate_content(
