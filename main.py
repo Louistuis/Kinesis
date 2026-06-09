@@ -134,11 +134,14 @@ def main():
         "/result <id>": "View the comprehensive final report of a mission",
         "/delete <id>": "Delete a mission log by ID or 'last'",
         "/resume <id>": "Resume a mission log by ID or 'last'",
+        "/voice on": "Enable Kinesis voice (speaks out loud its thoughts)",
+        "/voice off": "Disable Kinesis voice",
     }
     completer = WordCompleter(list(slash_commands.keys()), ignore_case=True)
 
     global_tasks = []
     logging_enabled = False
+    voice_enabled = False
 
     while True:
         try:
@@ -192,6 +195,17 @@ def main():
                         console.print(f"[bold red]Log {log_id} not found.[/bold red]")
                 else:
                     console.print("[dim]Usage: /log on | /log off | /log [ID][/dim]")
+                continue
+            if task.lower().startswith('/voice'):
+                args = task.lower().split()
+                if len(args) == 2 and args[1] == 'on':
+                    voice_enabled = True
+                    console.print("[bold green]Voice enabled. Kinesis will speak its thoughts.[/bold green]")
+                elif len(args) == 2 and args[1] == 'off':
+                    voice_enabled = False
+                    console.print("[dim]Voice disabled.[/dim]")
+                else:
+                    console.print("[dim]Usage: /voice on | /voice off[/dim]")
                 continue
             if cmd == '/list':
                 import os, json
@@ -372,6 +386,11 @@ def main():
                             if thought:
                                 dashboard.update_thought(thought)
                                 if logger: logger.add_thought(thought)
+                                if voice_enabled:
+                                    import subprocess
+                                    first_sentence = thought.split('.')[0].strip()
+                                    if first_sentence:
+                                        subprocess.Popen(['say', first_sentence])
                                 
                             action_name = event['action_name']
                             args = event['args']

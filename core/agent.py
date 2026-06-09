@@ -199,6 +199,8 @@ class MacAgent:
                     self.bridge.wait(0.5)
 
             if task_finished:
+                if previous_function_responses:
+                    self.history.append(types.Content(role="user", parts=previous_function_responses))
                 break
                 
             self.bridge.wait(WAIT_TIME_SECONDS)
