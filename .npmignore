@@ -8,3 +8,5 @@ logs/
 scratch/
 tests/
 __pycache__/
+.setup_complete
+ui/.setup_complete
