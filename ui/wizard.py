@@ -20,9 +20,10 @@ It looks like this is your first time launching Kinesis. Let's get everything se
     auth_choice = Prompt.ask(
         "Choose your authentication method:\n"
         "[1] API Key (Recommended for most users)\n"
-        "[2] OAuth / Application Default Credentials (e.g. Gemini CLI, gcloud)\n"
-        "Enter 1 or 2", 
-        choices=["1", "2"], 
+        "[2] OAuth (Auto-detect existing Gemini CLI / gcloud credentials)\n"
+        "[3] OAuth (Interactive Setup via URL)\n"
+        "Enter 1, 2, or 3", 
+        choices=["1", "2", "3"], 
         default="1"
     )
     
@@ -50,10 +51,17 @@ It looks like this is your first time launching Kinesis. Let's get everything se
             f.write(f"GEMINI_AUTH_MODE=apikey\nGEMINI_API_KEY={api_key.strip()}\n")
         console.print(f"[green]✔ Saved API Key to {env_path}[/green]")
         
-    else:
-        console.print("\n[yellow]OAuth Mode Selected.[/yellow]")
+    elif auth_choice == "2":
+        console.print("\n[yellow]OAuth Auto-Detect Mode Selected.[/yellow]")
         console.print("Kinesis will use your local Application Default Credentials (ADC).")
-        console.print("Make sure you have authenticated via the Gemini CLI or by running: [cyan]gcloud auth application-default login[/cyan]")
+        with open(env_path, "w") as f:
+            f.write("GEMINI_AUTH_MODE=oauth\n")
+        console.print(f"[green]✔ Saved OAuth Mode to {env_path}[/green]")
+        
+    elif auth_choice == "3":
+        console.print("\n[yellow]OAuth Interactive Setup Selected.[/yellow]")
+        console.print("Launching gcloud interactive authentication...")
+        os.system("gcloud auth application-default login --no-browser")
         with open(env_path, "w") as f:
             f.write("GEMINI_AUTH_MODE=oauth\n")
         console.print(f"[green]✔ Saved OAuth Mode to {env_path}[/green]")
