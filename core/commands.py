@@ -28,6 +28,7 @@ SLASH_COMMANDS = {
     "/result <id>": "View the comprehensive final report of a mission",
     "/delete <id>": "Delete a mission log by ID or 'last'",
     "/resume <id>": "Resume a mission log by ID or 'last'",
+    "/debug <id>": "View an advanced execution trace and latency for a mission",
     "/voice on": "Enable Kinesis voice (speaks out loud its thoughts)",
     "/voice off": "Disable Kinesis voice",
 }
@@ -177,6 +178,61 @@ class CommandProcessor:
                 self.console.print(f"[bold red]Log deleted.[/bold red]")
             else:
                 self.console.print(f"[dim]Log not found.[/dim]")
+            return True
+            
+        if task.lower().startswith('/debug '):
+            arg = task.lower().split()[1]
+            logs_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "logs")
+            target_file = None
+            if arg == 'last':
+                files = [f for f in os.listdir(logs_dir) if f.endswith('.json')]
+                if files:
+                    files.sort(key=lambda x: os.path.getmtime(os.path.join(logs_dir, x)), reverse=True)
+                    target_file = os.path.join(logs_dir, files[0])
+            else:
+                pot_file = os.path.join(logs_dir, f"{arg}.json")
+                if os.path.exists(pot_file): target_file = pot_file
+                
+            if target_file and os.path.exists(target_file):
+                with open(target_file, 'r') as f: data = json.load(f)
+                
+                self.console.print(f"\n[bold yellow]🛠️ ADVANCED DEBUG TRACE: {data.get('title', 'Unknown')} ({data.get('id')})[/bold yellow]")
+                
+                # Weave thoughts and actions
+                thoughts = data.get('thoughts', [])
+                actions = data.get('actions', [])
+                
+                # Combine and sort by timestamp
+                trace = []
+                for t in thoughts:
+                    trace.append({"type": "THOUGHT", "time": t.get("timestamp"), "content": t.get("thought")})
+                for a in actions:
+                    trace.append({"type": "ACTION", "time": a.get("timestamp"), "content": f"{a.get('action').upper()} -> {a.get('args')}"})
+                    
+                trace.sort(key=lambda x: x["time"])
+                
+                from datetime import datetime
+                
+                table = Table(title="Execution Trace", show_header=True, header_style="bold yellow")
+                table.add_column("Step", style="dim", justify="right")
+                table.add_column("Type", style="magenta")
+                table.add_column("Latency", style="cyan")
+                table.add_column("Content", style="green", overflow="fold")
+                
+                last_time = None
+                for i, step in enumerate(trace):
+                    try:
+                        curr_time = datetime.fromisoformat(step["time"])
+                        latency = f"{(curr_time - last_time).total_seconds():.2f}s" if last_time else "0.00s"
+                        last_time = curr_time
+                    except:
+                        latency = "N/A"
+                        
+                    table.add_row(str(i+1), step["type"], latency, str(step["content"]))
+                    
+                self.console.print(table)
+            else:
+                self.console.print(f"[bold red]Log not found for debug trace.[/bold red]")
             return True
             
         if task.lower().startswith('/resume '):
