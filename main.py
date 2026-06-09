@@ -127,9 +127,9 @@ def main():
         "/version": "Show current Kinesis build version",
         "/update": "Pull latest code and instantly hot-reload Kinesis",
         "/tasks": "Inject tasks into the Task Manager (e.g., /tasks 'Find email', 'Reply')",
+        "/list": "List all saved mission logs and results",
         "/log on": "Enable mission logging and AI auto-naming",
         "/log off": "Disable mission logging",
-        "/log list": "List all saved mission logs",
         "/log <id>": "View a specific mission log by ID",
         "/result <id>": "View the comprehensive final report of a mission",
         "/delete <id>": "Delete a mission log by ID or 'last'",
@@ -175,30 +175,6 @@ def main():
                 elif len(args) == 2 and args[1] == 'off':
                     logging_enabled = False
                     console.print("[dim]Logging disabled.[/dim]")
-                elif len(args) == 2 and args[1] == 'list':
-                    import os, json
-                    from rich.table import Table
-                    logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
-                    if not os.path.exists(logs_dir) or not os.listdir(logs_dir):
-                        console.print("[dim]No logs found.[/dim]")
-                    else:
-                        table = Table(title="Mission Logs", show_header=True, header_style="bold magenta")
-                        table.add_column("ID", style="cyan")
-                        table.add_column("Title", style="green")
-                        table.add_column("Timestamp", style="dim")
-                        logs = []
-                        for f in os.listdir(logs_dir):
-                            if f.endswith('.json'):
-                                with open(os.path.join(logs_dir, f), 'r') as log_file:
-                                    try:
-                                        data = json.load(log_file)
-                                        logs.append(data)
-                                    except:
-                                        pass
-                        logs.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
-                        for log in logs:
-                            table.add_row(log.get('id', ''), log.get('title', ''), log.get('timestamp', '')[:16].replace('T', ' '))
-                        console.print(table)
                 elif len(args) == 2:
                     log_id = args[1]
                     import os, json
@@ -215,33 +191,35 @@ def main():
                     else:
                         console.print(f"[bold red]Log {log_id} not found.[/bold red]")
                 else:
-                    console.print("[dim]Usage: /log on | /log off | /log list | /log [ID][/dim]")
+                    console.print("[dim]Usage: /log on | /log off | /log [ID][/dim]")
                 continue
-            if task.lower().startswith('/result'):
+            if cmd == '/list':
+                import os, json
+                from rich.table import Table
+                logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
+                if not os.path.exists(logs_dir) or not os.listdir(logs_dir):
+                    console.print("[dim]No missions found.[/dim]")
+                    continue
+                table = Table(title="Mission History", show_header=True, header_style="bold magenta")
+                table.add_column("ID", style="cyan")
+                table.add_column("Title", style="green")
+                table.add_column("Timestamp", style="dim")
+                logs = []
+                for f in os.listdir(logs_dir):
+                    if f.endswith('.json'):
+                        with open(os.path.join(logs_dir, f), 'r') as log_file:
+                            try:
+                                logs.append(json.load(log_file))
+                            except:
+                                pass
+                logs.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+                for log in logs:
+                    table.add_row(log.get('id', ''), log.get('title', ''), log.get('timestamp', '')[:16].replace('T', ' '))
+                console.print(table)
+                continue
+            if task.lower().startswith('/result '):
                 args = task.lower().split()
-                if len(args) == 1 or args[1] == 'list':
-                    # Handled identical to /log list
-                    import os, json
-                    from rich.table import Table
-                    logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
-                    if not os.path.exists(logs_dir) or not os.listdir(logs_dir):
-                        console.print("[dim]No results found.[/dim]")
-                        continue
-                    table = Table(title="Mission Results", show_header=True, header_style="bold magenta")
-                    table.add_column("ID", style="cyan")
-                    table.add_column("Title", style="green")
-                    table.add_column("Timestamp", style="dim")
-                    logs = []
-                    for f in os.listdir(logs_dir):
-                        if f.endswith('.json'):
-                            with open(os.path.join(logs_dir, f), 'r') as log_file:
-                                try: logs.append(json.load(log_file))
-                                except: pass
-                    logs.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
-                    for log in logs:
-                        table.add_row(log.get('id', ''), log.get('title', ''), log.get('timestamp', '')[:16].replace('T', ' '))
-                    console.print(table)
-                elif len(args) == 2:
+                if len(args) == 2:
                     arg = args[1]
                     import os, json
                     logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
