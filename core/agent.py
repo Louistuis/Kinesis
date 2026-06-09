@@ -77,6 +77,9 @@ class MacAgent:
         previous_function_responses = []
         
         while True:
+            # Check for pause flag (set externally via state)
+            yield {"type": "check_pause"}
+            
             # 1. Capture & Prepare
             yield {"type": "status", "message": "Capturing screen..."}
             
@@ -121,6 +124,8 @@ class MacAgent:
                     # We don't have x,y here, just state
                     f.write(json.dumps({"state": "idle"}))
             except: pass
+            
+            yield {"type": "api_call"}
             
             try:
                 response = self._query_model()
@@ -210,6 +215,8 @@ class MacAgent:
                 previous_function_responses.append(
                     types.Part.from_function_response(name=name, response=result_dict)
                 )
+                
+                yield {"type": "metrics", "action_name": name, "args": args, "thought": thought_text}
                 
                 if action_executed_this_turn and "error" not in result_dict and not task_finished:
                     self.bridge.wait(0.5)

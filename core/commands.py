@@ -2,12 +2,15 @@ import os
 import sys
 import json
 import subprocess
+import time
+from datetime import datetime, timezone
 import pyautogui
 from rich.console import Console
 from rich.panel import Panel
 from rich.markdown import Markdown
 from rich.table import Table
 from core.state import CLIState
+import core.config
 
 # Replicate slash_commands dict
 SLASH_COMMANDS = {
@@ -31,6 +34,13 @@ SLASH_COMMANDS = {
     "/debug <id>": "View an advanced execution trace and latency for a mission",
     "/voice on": "Enable Kinesis voice (speaks out loud its thoughts)",
     "/voice off": "Disable Kinesis voice",
+    "/screen <n>": "Switch the active monitor Kinesis operates on",
+    "/pause": "Toggle pause/resume of the agent loop",
+    "/speed <fast|normal|slow>": "Change agent execution speed at runtime",
+    "/history": "Show the last 20 actions from this session",
+    "/screenshot": "Capture a screenshot and save it to screenshots/",
+    "/model": "Print the current AI model name",
+    "/cost": "Show estimated API cost, call count, and steps",
 }
 
 class CommandProcessor:
@@ -326,6 +336,96 @@ Kinesis supports two authentication modes, configurable via `/setup`:
             except: pass
             os.execv(sys.executable, [sys.executable, "main.py"])
             
+        if task.lower().startswith('/screen '):
+            args = task.split()
+            if len(args) == 2:
+                try:
+                    screens = self.agent.bridge.get_screens()
+                    idx = int(args[1])
+                    if 1 <= idx <= len(screens):
+                        selected = screens[idx - 1]
+                        self.agent.bridge.set_active_screen((selected["x"], selected["y"], selected["w"], selected["h"]))
+                        self.console.print(f"[bold green]Switched to Screen {idx}[/bold green] — {selected['w']}x{selected['h']}")
+                    else:
+                        self.console.print(f"[dim]Invalid screen number. Available: 1-{len(screens)}[/dim]")
+                except ValueError:
+                    self.console.print("[dim]Usage: /screen <number>[/dim]")
+            else:
+                self.console.print("[dim]Usage: /screen <number>[/dim]")
+            return True
+
+        if cmd == '/pause':
+            self.state.paused = not self.state.paused
+            status = "[bold yellow]PAUSED[/bold yellow]" if self.state.paused else "[bold green]RESUMED[/bold green]"
+            self.console.print(f"Agent loop: {status}")
+            return True
+
+        if task.lower().startswith('/speed '):
+            args = task.lower().split()
+            if len(args) == 2 and args[1] in core.config.SPEED_PRESETS:
+                choice = args[1]
+                core.config.WAIT_TIME_SECONDS = core.config.SPEED_PRESETS[choice]
+                self.console.print(f"[bold green]Speed set to {choice}[/bold green] — wait time: {core.config.WAIT_TIME_SECONDS}s")
+            else:
+                self.console.print("[dim]Usage: /speed <fast|normal|slow>[/dim]")
+            return True
+
+        if cmd == '/history':
+            actions = self.state.session_actions[-20:]
+            if not actions:
+                self.console.print("[dim]No actions recorded in this session yet.[/dim]")
+                return True
+            table = Table(title="Session History (Last 20)", show_header=True, header_style="bold cyan")
+            table.add_column("Step", style="dim", justify="right")
+            table.add_column("Action", style="magenta")
+            table.add_column("Target", style="green", overflow="fold")
+            table.add_column("Time", style="dim")
+            now = datetime.now(timezone.utc)
+            for entry in actions:
+                step = str(entry.get("step", ""))
+                action = str(entry.get("action", ""))
+                args_str = str(entry.get("args", ""))[:60]
+                entry_time = entry.get("time", 0)
+                try:
+                    secs = int(time.time() - entry_time)
+                    if secs < 60:
+                        rel = f"{secs}s ago"
+                    elif secs < 3600:
+                        rel = f"{secs // 60}m ago"
+                    else:
+                        rel = f"{secs // 3600}h ago"
+                except:
+                    rel = "N/A"
+                table.add_row(step, action, args_str, rel)
+            self.console.print(table)
+            return True
+
+        if cmd == '/screenshot':
+            screenshots_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "screenshots")
+            os.makedirs(screenshots_dir, exist_ok=True)
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"screenshot_{timestamp}.jpg"
+            filepath = os.path.join(screenshots_dir, filename)
+            img, _, _ = self.agent.bridge.capture_screen()
+            if img.mode in ('RGBA', 'P'):
+                img = img.convert('RGB')
+            img.save(filepath, format='JPEG', quality=90)
+            self.console.print(f"[bold green]Screenshot saved:[/bold green] {filepath}")
+            return True
+
+        if cmd == '/model':
+            self.console.print(f"[bold cyan]Current model:[/bold cyan] {core.config.MODEL_NAME}")
+            return True
+
+        if cmd == '/cost':
+            cost = self.state.estimated_cost
+            calls = self.state.api_calls
+            steps = self.state.total_steps
+            self.console.print(f"[bold cyan]Estimated Cost:[/bold cyan] ${cost:.4f}")
+            self.console.print(f"[bold cyan]API Calls:[/bold cyan] {calls}")
+            self.console.print(f"[bold cyan]Total Steps:[/bold cyan] {steps}")
+            return True
+
         if cmd.startswith('/'):
             self.console.print(f"[dim]Unknown command: {cmd}[/dim]")
             return True

@@ -1,5 +1,6 @@
 import time
 import pyautogui
+from google.genai import types
 from rich.console import Console
 from rich.panel import Panel
 from rich.rule import Rule
@@ -131,6 +132,53 @@ class KinesisCLI:
                         live.update(dashboard.build_layout())
                         time.sleep(1)
                         self.console.print(Panel(f"❌ [bold red]ERROR:[/bold red] {event['message']}", border_style="red"))
+                    
+                    elif event["type"] == "metrics":
+                        # Record action in state for /history and loop detection
+                        self.state.record_action(event["action_name"], event["args"], event.get("thought", ""))
+                        
+                        # Retry budget: inject escape hatch if stuck
+                        if self.state.consecutive_same_action >= 3:
+                            dashboard.update_status("⚠️ Loop detected! Injecting alternative approach...")
+                            self.agent.history.append(
+                                types.Content(role="user", parts=[types.Part.from_text(
+                                    text="SYSTEM OVERRIDE: You have repeated the same action 3+ times. You are STUCK IN A LOOP. "
+                                         "You MUST try a completely different approach NOW. If you're trying to close a popup, "
+                                         "try pressing Escape, or use keyboard shortcuts, or just ignore it and work around it."
+                                )])
+                            )
+                            self.state.consecutive_same_action = 0
+                        
+                        # Popup escape: auto-inject Escape key if popup mentioned 3+ times
+                        if self.state.consecutive_popup_mentions >= 3:
+                            dashboard.update_status("⚠️ Popup loop detected! Auto-pressing Escape...")
+                            self.agent.bridge.execute_keyboard_action("press", keys=["escape"])
+                            self.state.consecutive_popup_mentions = 0
+
+                    elif event["type"] == "api_call":
+                        self.state.record_api_call()
+
+                    elif event["type"] == "check_pause":
+                        while self.state.paused:
+                            dashboard.update_status("⏸️ PAUSED — Type /pause to resume")
+                            time.sleep(0.5)
+                        
+                    # Update dashboard vitals
+                    w, h = pyautogui.size()
+                    import core.config
+                    speed_name = "normal"
+                    for name_key, val in core.config.SPEED_PRESETS.items():
+                        if core.config.WAIT_TIME_SECONDS == val:
+                            speed_name = name_key
+                            break
+                    dashboard.update_vitals(
+                        steps=self.state.total_steps,
+                        api_calls=self.state.api_calls,
+                        cost=self.state.estimated_cost,
+                        elapsed=self.state.get_elapsed(),
+                        resolution=f"{w}x{h}",
+                        speed=speed_name
+                    )
                         
                     live.update(get_renderable())
                     

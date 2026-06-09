@@ -8,11 +8,21 @@ if GEMINI_AUTH_MODE == "apikey" and not GEMINI_API_KEY:
     raise ValueError("GEMINI_API_KEY environment variable is required when using API Key auth.")
 
 MODEL_NAME = "gemini-3-flash-preview"
-KINESIS_VERSION = "0.9.6-beta"
+KINESIS_VERSION = "1.0.0"
 
 # Resolution and Scaling Config
 TARGET_MAX_WIDTH = 1512 # Full MacBook logical width for pixel-perfect precision
 WAIT_TIME_SECONDS = 0.5
+
+# Speed presets for /speed command
+SPEED_PRESETS = {
+    "fast": 0.2,
+    "normal": 0.5,
+    "slow": 1.5,
+}
+
+# Estimated cost per API call (Gemini 3 Flash pricing rough estimate)
+COST_PER_API_CALL = 0.0005
 
 def calculate_scaling_factor(original_width: int, target_width: int = TARGET_MAX_WIDTH) -> float:
     """
