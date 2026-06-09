@@ -1,0 +1,10 @@
+.env
+debug_history.txt
+debug_screenshot.jpg
+test_capture.jpg
+*.vtt
+cursor_pos.txt
+logs/
+scratch/
+tests/
+__pycache__/
