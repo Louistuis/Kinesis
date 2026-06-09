@@ -123,6 +123,7 @@ def main():
         "/clear": "Clear the terminal screen and agent memory",
         "/setup": "Restart the setup wizard to change API keys",
         "/status": "Show agent status and system info",
+        "/version": "Show current Kinesis build version",
         "/update": "Pull latest code and instantly hot-reload Kinesis",
         "/tasks": "Inject tasks into the Task Manager (e.g., /tasks 'Find email', 'Reply')",
         "/log on": "Enable mission logging and AI auto-naming",
@@ -339,8 +340,13 @@ def main():
                 continue
             if cmd == '/status':
                 width, height = pyautogui.size()
-                status_text = f"**System Information:**\n- Primary Display Resolution: {width}x{height}\n- Fail-Safe: Active\n- API Model: gemini-2.5-computer-use-preview-10-2025"
+                from core.config import KINESIS_VERSION
+                status_text = f"**System Information:**\n- Primary Display Resolution: {width}x{height}\n- Fail-Safe: Active\n- API Model: gemini-2.5-computer-use-preview-10-2025\n- Build Version: {KINESIS_VERSION}"
                 console.print(Panel(Markdown(status_text), border_style="magenta"))
+                continue
+            if cmd == '/version':
+                from core.config import KINESIS_VERSION
+                console.print(f"[bold cyan]Kinesis Build Version:[/bold cyan] {KINESIS_VERSION}")
                 continue
             if cmd == '/update':
                 console.print("\n[dim]Pulling latest changes from GitHub...[/dim]")
