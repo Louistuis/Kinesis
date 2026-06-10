@@ -11,10 +11,8 @@ from core.executor import ActionExecutor
 
 class MacAgent:
     def __init__(self, bridge=None):
-        if GEMINI_AUTH_MODE == "oauth":
-            self.client = genai.Client()
-        else:
-            self.client = genai.Client(api_key=GEMINI_API_KEY)
+        from core.config import get_genai_client
+        self.client = get_genai_client()
         self.bridge = bridge if bridge else MacBridge()
         self.executor = ActionExecutor(self.bridge)
         self.history = []

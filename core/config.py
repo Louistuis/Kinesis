@@ -8,7 +8,25 @@ if GEMINI_AUTH_MODE == "apikey" and not GEMINI_API_KEY:
     raise ValueError("GEMINI_API_KEY environment variable is required when using API Key auth.")
 
 MODEL_NAME = "gemini-3-flash-preview"
-KINESIS_VERSION = "1.1.3"
+KINESIS_VERSION = "1.1.4"
+
+def get_genai_client():
+    from google import genai
+    if GEMINI_AUTH_MODE == "gemini-cli":
+        import json
+        from google.oauth2.credentials import Credentials
+        creds_path = os.path.expanduser("~/.gemini/oauth_creds.json")
+        try:
+            with open(creds_path, 'r') as f:
+                data = json.load(f)
+            creds = Credentials(token=data['access_token'])
+            return genai.Client(credentials=creds)
+        except Exception as e:
+            raise RuntimeError(f"Failed to load Gemini CLI credentials from {creds_path}: {e}")
+    elif GEMINI_AUTH_MODE == "oauth":
+        return genai.Client()
+    else:
+        return genai.Client(api_key=GEMINI_API_KEY)
 
 # Resolution and Scaling Config
 TARGET_MAX_WIDTH = 1512 # Full MacBook logical width for pixel-perfect precision

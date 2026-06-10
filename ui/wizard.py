@@ -20,7 +20,7 @@ It looks like this is your first time launching Kinesis. Let's get everything se
     auth_choice = Prompt.ask(
         "Choose your authentication method:\n"
         "[1] API Key (Recommended for most users)\n"
-        "[2] OAuth (Auto-detect existing Gemini CLI / gcloud credentials)\n"
+        "[2] Gemini CLI Pro Auth (Auto-detect from ~/.gemini)\n"
         "[3] OAuth (Interactive Setup via URL)\n"
         "Enter 1, 2, or 3", 
         choices=["1", "2", "3"], 
@@ -52,11 +52,17 @@ It looks like this is your first time launching Kinesis. Let's get everything se
         console.print(f"[green]✔ Saved API Key to {env_path}[/green]")
         
     elif auth_choice == "2":
-        console.print("\n[yellow]OAuth Auto-Detect Mode Selected.[/yellow]")
-        console.print("Kinesis will use your local Application Default Credentials (ADC).")
+        console.print("\n[yellow]Gemini CLI Pro Auth Selected.[/yellow]")
+        creds_path = os.path.expanduser("~/.gemini/oauth_creds.json")
+        if not os.path.exists(creds_path):
+            console.print(f"[red]❌ Error: Could not find credentials at {creds_path}[/red]")
+            console.print("Please run `gemini` in your terminal to log in first, or choose Option 1.")
+            sys.exit(1)
+            
+        console.print("Kinesis will piggyback on your existing Gemini Advanced subscription!")
         with open(env_path, "w") as f:
-            f.write("GEMINI_AUTH_MODE=oauth\n")
-        console.print(f"[green]✔ Saved OAuth Mode to {env_path}[/green]")
+            f.write("GEMINI_AUTH_MODE=gemini-cli\n")
+        console.print(f"[green]✔ Saved Gemini CLI Mode to {env_path}[/green]")
         
     elif auth_choice == "3":
         console.print("\n[yellow]OAuth Interactive Setup Selected.[/yellow]")
@@ -79,15 +85,17 @@ It looks like this is your first time launching Kinesis. Let's get everything se
     # Verify Credentials Live
     console.print("\n[dim]Verifying Gemini API access...[/dim]")
     try:
-        from google import genai
         # Force reload env to pick up the newly written file
         from dotenv import load_dotenv
         load_dotenv(env_path, override=True)
         
-        if os.environ.get("GEMINI_AUTH_MODE") == "oauth":
-            client = genai.Client()
-        else:
-            client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+        # Add the parent directory to sys.path so core can be imported
+        kinesis_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if kinesis_dir not in sys.path:
+            sys.path.insert(0, kinesis_dir)
+            
+        from core.config import get_genai_client
+        client = get_genai_client()
             
         # Light ping to verify auth
         client.models.get(model="gemini-3-flash-preview")

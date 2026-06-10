@@ -35,8 +35,9 @@ class Logger:
         
     def save(self):
         # Auto-name the conversation using Flash Lite
+        from core.config import get_genai_client
         try:
-            client = genai.Client(api_key=GEMINI_API_KEY)
+            client = get_genai_client()
             prompt = f"Summarize this desktop AI agent mission into a short, punchy 3-5 word title.\nDirective: {self.directive}\nActions Taken: {[a['action'] for a in self.actions]}\nOutput ONLY the title, no quotes or prefixes."
             response = client.models.generate_content(
                 model="gemini-3.1-flash-lite-preview",

@@ -8,10 +8,8 @@ class TaskObserver:
         self.directive = directive
         self.global_tasks = global_tasks
         self.dashboard = dashboard
-        if GEMINI_AUTH_MODE == "oauth":
-            self.client = genai.Client()
-        else:
-            self.client = genai.Client(api_key=GEMINI_API_KEY)
+        from core.config import get_genai_client
+        self.client = get_genai_client()
         self.model_name = "gemini-3.1-flash-lite-preview"
         self._lock = threading.Lock()
         
