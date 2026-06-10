@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🧠 Kinesis CLI
+# 🧠 Kinesis CLI (Beta 1.1.2)
 
 **The Next-Generation Autonomous macOS Desktop Agent**
 
@@ -112,7 +112,7 @@ Kinesis features a robust, auto-completing CLI environment. Below are the core s
 
 ## 🖥️ The 5-Panel TUI Dashboard
 
-Kinesis v1.1.0 introduces a massive, cyberpunk-themed 5-panel terminal UI that gives you god-mode visibility into the agent's brain:
+Kinesis v1.1.2 introduces a massive, cyberpunk-themed 5-panel terminal UI that gives you god-mode visibility into the agent's brain:
 
 1. **Header**: Live mission directive, elapsed timer, and step counter.
 2. **⚡ Action Stream**: A color-coded, scrolling feed of the agent's precise physical actions (mouse clicks, keyboard typing, scrolling) with relative timestamps.
