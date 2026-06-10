@@ -8,7 +8,7 @@ if GEMINI_AUTH_MODE == "apikey" and not GEMINI_API_KEY:
     raise ValueError("GEMINI_API_KEY environment variable is required when using API Key auth.")
 
 MODEL_NAME = "gemini-3-flash-preview"
-KINESIS_VERSION = "1.1.2"
+KINESIS_VERSION = "1.1.3"
 
 # Resolution and Scaling Config
 TARGET_MAX_WIDTH = 1512 # Full MacBook logical width for pixel-perfect precision

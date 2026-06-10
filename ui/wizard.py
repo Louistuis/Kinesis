@@ -60,11 +60,44 @@ It looks like this is your first time launching Kinesis. Let's get everything se
         
     elif auth_choice == "3":
         console.print("\n[yellow]OAuth Interactive Setup Selected.[/yellow]")
+        if os.system("command -v gcloud > /dev/null") != 0:
+            console.print("[red]❌ Error: Google Cloud CLI (gcloud) is not installed on your system.[/red]")
+            console.print("Please install it first: [cyan]https://cloud.google.com/sdk/docs/install[/cyan]")
+            console.print("Or run the wizard again and choose API Key authentication.")
+            sys.exit(1)
+            
         console.print("Launching gcloud interactive authentication...")
-        os.system("gcloud auth application-default login --no-browser")
+        ret = os.system("gcloud auth application-default login --no-browser")
+        if ret != 0:
+            console.print("[red]❌ OAuth login failed or was cancelled.[/red]")
+            sys.exit(1)
+            
         with open(env_path, "w") as f:
             f.write("GEMINI_AUTH_MODE=oauth\n")
         console.print(f"[green]✔ Saved OAuth Mode to {env_path}[/green]")
+        
+    # Verify Credentials Live
+    console.print("\n[dim]Verifying Gemini API access...[/dim]")
+    try:
+        from google import genai
+        # Force reload env to pick up the newly written file
+        from dotenv import load_dotenv
+        load_dotenv(env_path, override=True)
+        
+        if os.environ.get("GEMINI_AUTH_MODE") == "oauth":
+            client = genai.Client()
+        else:
+            client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+            
+        # Light ping to verify auth
+        client.models.get(model="gemini-3-flash-preview")
+        console.print("[green]✔ Authentication verified successfully![/green]")
+    except Exception as e:
+        console.print(f"[red]❌ Authentication Verification Failed:[/red] {e}")
+        console.print("[yellow]Please run the setup wizard again to fix your credentials.[/yellow]")
+        if os.path.exists(env_path):
+            os.remove(env_path) # Clean up invalid config
+        sys.exit(1)
     
     # 2. Permissions Guide
     console.print("\n[bold magenta]Step 2: macOS Permissions[/bold magenta]")
